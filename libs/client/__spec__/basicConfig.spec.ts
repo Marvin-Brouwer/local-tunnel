@@ -6,13 +6,19 @@ import { createLocalTunnelClient } from "../src";
 const client = createLocalTunnelClient({
     port: 4321,
     // host: 'localhost',
+    // server: {
+    //     hostName: ...,
+    //     subDomain: ...
+    // },
+    https: {
+        skipCertificateValidation: true,
+        // cert: {
+        //     pemLocation: ...,
+        //     keyLocation: ...,
+        //     certificateAuthorityLocation: ...
+        // }
+    }
 })
-// .withCustomHost({ ... });
-.withHttps({ 
-    skipCertificateValidation: true,
-    // cert: { ... }
-})
-// .withDomain('name', true);
 
 client.on('request', (method, path) => {
 	console.info(method, path)
@@ -31,5 +37,6 @@ const tunnel = await client.listen();
 
 console.log(tunnel.url)
 console.log(tunnel.password)
+// TODO tunnel.selfValidate(), where it fils in the form for you?
 
 tunnel.close();

@@ -1,15 +1,6 @@
-import { type ClientConfig } from './client-config';
+import { applyConfig, type ClientConfig } from './client-config';
 
-export type LocalHostConfiguration = {
-    port: number,
-    host?: string,
-    https?: boolean
-}
+export const createLocalTunnelClient = (config: ClientConfig): LocalTunnelClient => {
 
-export interface LocalTunnelClient extends ClientConfig<LocalTunnelClient> {
-    
-}
-
-export const createLocalTunnelClient = (localHost: LocalHostConfiguration): LocalTunnelClient => {
-
+    const tunnelConfig = applyConfig(config);
 }
