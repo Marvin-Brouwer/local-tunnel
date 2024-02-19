@@ -1,35 +1,27 @@
 {
-  "name": "localtunnel",
+  "name": "local-tunnel",
+  "private": true,
   "description": "Expose localhost to the world",
-  "version": "2.0.2",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git://github.com/localtunnel/localtunnel.git"
+    "url": "https://github.com/Marvin-Brouwer/local-tunnel"
   },
-  "author": "Roman Shtylman <shtylman@gmail.com>",
+  "author": "Original: Roman Shtylman <shtylman@gmail.com>",
   "contributors": [
     "Roman Shtylman <shtylman@gmail.com>",
     "Gert Hengeveld <gert@hichroma.com>",
     "Tom Coleman <tom@hichroma.com>"
   ],
-  "main": "./localtunnel.js",
-  "bin": {
-    "lt": "bin/lt.js"
-  },
   "scripts": {
-    "test": "mocha --reporter list --timeout 60000 -- *.spec.js"
-  },
-  "dependencies": {
-    "axios": "0.21.4",
-    "debug": "4.3.2",
-    "openurl": "1.1.1",
-    "yargs": "17.1.1"
-  },
-  "devDependencies": {
-    "mocha": "~9.1.1"
+    "build": "pnpm -r build",
+    "watch": "pnpm -r watch",
+    "test": "pnpm -r test"
   },
   "engines": {
-    "node": ">=8.3.0"
+    "node": ">=19.4.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
   }
 }

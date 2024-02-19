@@ -1,20 +1,28 @@
-const { EventEmitter } = require('events');
-const debug = require('debug')('localtunnel:client');
-const fs = require('fs');
-const net = require('net');
-const tls = require('tls');
+import { EventEmitter } from 'node:events';
+import fs from 'node:fs';
+import net from 'node:net';
+import tls from 'node:tls';
+import { HeaderHostTransformer } from './header-host-transformer';
+import debug from 'debug'
+import type { Duplex } from 'node:stream';
 
-const HeaderHostTransformer = require('./HeaderHostTransformer');
+const clientDebug = debug('localtunnel:client');
+
+type TODO = any;
+type ConnectionError = Error & { code: string };
 
 // manages groups of tunnels
-module.exports = class TunnelCluster extends EventEmitter {
+export class TunnelCluster extends EventEmitter {
+
+  #opts: TODO;
+
   constructor(opts = {}) {
     super(opts);
-    this.opts = opts;
+    this.#opts = opts;
   }
 
   open() {
-    const opt = this.opts;
+    const opt = this.#opts;
 
     // Prefer IP if returned by the server
     const remoteHostOrIp = opt.remote_ip || opt.remote_host;
@@ -24,7 +32,7 @@ module.exports = class TunnelCluster extends EventEmitter {
     const localProtocol = opt.local_https ? 'https' : 'http';
     const allowInvalidCert = opt.allow_invalid_cert;
 
-    debug(
+    clientDebug(
       'establishing tunnel %s://%s:%s <> %s:%s',
       localProtocol,
       localHost,
@@ -34,15 +42,14 @@ module.exports = class TunnelCluster extends EventEmitter {
     );
 
     // connection to localtunnel server
-    const remote = net.connect({
+    const remote: Duplex = net.connect({
       host: remoteHostOrIp,
       port: remotePort,
-    });
+    })
+    .setKeepAlive(true);
 
-    remote.setKeepAlive(true);
-
-    remote.on('error', err => {
-      debug('got remote connection error', err.message);
+    remote.on('error', (err: ConnectionError) => {
+      clientDebug('got remote connection error', err.message);
 
       // emit connection refused errors immediately, because they
       // indicate that the tunnel can't be established.
@@ -60,16 +67,16 @@ module.exports = class TunnelCluster extends EventEmitter {
 
     const connLocal = () => {
       if (remote.destroyed) {
-        debug('remote destroyed');
+        clientDebug('remote destroyed');
         this.emit('dead');
         return;
       }
 
-      debug('connecting locally to %s://%s:%d', localProtocol, localHost, localPort);
+      clientDebug('connecting locally to %s://%s:%d', localProtocol, localHost, localPort);
       remote.pause();
 
       if (allowInvalidCert) {
-        debug('allowing invalid certificates');
+        clientDebug('allowing invalid certificates');
       }
 
       const getLocalCertOpts = () =>
@@ -87,7 +94,7 @@ module.exports = class TunnelCluster extends EventEmitter {
         : net.connect({ host: localHost, port: localPort });
 
       const remoteClose = () => {
-        debug('remote close');
+        clientDebug('remote close');
         this.emit('dead');
         local.end();
       };
@@ -97,8 +104,8 @@ module.exports = class TunnelCluster extends EventEmitter {
       // TODO some languages have single threaded servers which makes opening up
       // multiple local connections impossible. We need a smarter way to scale
       // and adjust for such instances to avoid beating on the door of the server
-      local.once('error', err => {
-        debug('local error %s', err.message);
+      local.once('error', (err: ConnectionError) => {
+        clientDebug('local error %s', err.message);
         local.end();
 
         remote.removeListener('close', remoteClose);
@@ -113,7 +120,7 @@ module.exports = class TunnelCluster extends EventEmitter {
       });
 
       local.once('connect', () => {
-        debug('connected locally');
+        clientDebug('connected locally');
         remote.resume();
 
         let stream = remote;
@@ -121,7 +128,7 @@ module.exports = class TunnelCluster extends EventEmitter {
         // if user requested specific local host
         // then we use host header transform to replace the host header
         if (opt.local_host) {
-          debug('transform Host header to %s', opt.local_host);
+          clientDebug('transform Host header to %s', opt.local_host);
           stream = remote.pipe(new HeaderHostTransformer({ host: opt.local_host }));
         }
 
@@ -129,7 +136,7 @@ module.exports = class TunnelCluster extends EventEmitter {
 
         // when local closes, also get a new remote
         local.once('close', hadError => {
-          debug('local connection closed [%s]', hadError);
+          clientDebug('local connection closed [%s]', hadError);
         });
       });
     };

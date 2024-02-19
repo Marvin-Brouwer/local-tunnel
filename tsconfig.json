@@ -1,0 +1,22 @@
+{
+	"$schema": "https://json.schemastore.org/tsconfig",
+	"compilerOptions": {
+		"removeComments": false,
+		"target": "ESNext",
+		"moduleResolution": "Node",
+		"allowJs": true,
+		"resolveJsonModule": true,
+		"checkJs": true,
+		"esModuleInterop": true,
+		"noImplicitThis": true,
+		"declaration": true,
+		"declarationMap": true,
+		"declarationDir": "./dist/types",
+        "composite": true,
+		"lib": [
+		  "ESNext",
+		],
+		"module": "ESNext",
+		"outDir": "./dist"
+	}
+}

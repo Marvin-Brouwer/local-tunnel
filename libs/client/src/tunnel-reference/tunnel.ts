@@ -1,27 +1,43 @@
 /* eslint-disable consistent-return, no-underscore-dangle */
 
-const { parse } = require('url');
-const { EventEmitter } = require('events');
-const axios = require('axios');
-const debug = require('debug')('localtunnel:client');
+import { parse } from 'node:url';
+import { EventEmitter } from 'node:events';
+// TODO replace with fetch
+import axios from 'axios';
+import { TunnelCluster } from './tunnel-cluster';
+import debug from 'debug'
 
-const TunnelCluster = require('./TunnelCluster');
+const clientDebug = debug('localtunnel:client');
 
-module.exports = class Tunnel extends EventEmitter {
+type TODO = any;
+
+export class Tunnel extends EventEmitter {
+
+  #opts: TODO;
+  #tunnelCluster: TunnelCluster;
+  #closed: boolean;
+  #clientId: TODO;
+  #url: TODO;
+  #cachedUrl: TODO;
+
+  public get closed(): boolean {
+    return this.#closed
+  }
+
   constructor(opts = {}) {
     super(opts);
-    this.opts = opts;
-    this.closed = false;
-    if (!this.opts.host) {
-      this.opts.host = 'https://localtunnel.me';
+    this.#opts = opts;
+    this.#closed = false;
+    // TODO move to config builder
+    if (!this.#opts.host) {
+      this.#opts.host = 'https://localtunnel.me';
     }
   }
 
-  _getInfo(body) {
-    /* eslint-disable camelcase */
+  #getInfo(body: TODO): TODO {
     const { id, ip, port, url, cached_url, max_conn_count } = body;
-    const { host, port: local_port, local_host } = this.opts;
-    const { local_https, local_cert, local_key, local_ca, allow_invalid_cert } = this.opts;
+    const { host, port: local_port, local_host } = this.#opts;
+    const { local_https, local_cert, local_key, local_ca, allow_invalid_cert } = this.#opts;
     return {
       name: id,
       url,
@@ -38,18 +54,13 @@ module.exports = class Tunnel extends EventEmitter {
       local_ca,
       allow_invalid_cert,
     };
-    /* eslint-enable camelcase */
   }
 
   // initialize connection
   // callback with connection info
-  _init(cb) {
-    const opt = this.opts;
-    const getInfo = this._getInfo.bind(this);
-
-    const params = {
-      responseType: 'json',
-    };
+  #init(cb: TODO): void {
+    const opt = this.#opts;
+    const getInfo = this.#getInfo.bind(this);
 
     const baseUri = `${opt.host}/`;
     // no subdomain at first, maybe use requested domain
@@ -59,10 +70,12 @@ module.exports = class Tunnel extends EventEmitter {
 
     (function getUrl() {
       axios
-        .get(uri, params)
+        .get(uri, {
+          responseType: 'json',
+        })
         .then(res => {
           const body = res.data;
-          debug('got tunnel information', res.data);
+          clientDebug('got tunnel information', res.data);
           if (res.status !== 200) {
             const err = new Error(
               (body && body.message) || 'localtunnel server returned an error, please try again'
@@ -72,36 +85,36 @@ module.exports = class Tunnel extends EventEmitter {
           cb(null, getInfo(body));
         })
         .catch(err => {
-          debug(`tunnel server offline: ${err.message}, retry 1s`);
+          clientDebug(`tunnel server offline: ${err.message}, retry 1s`);
           return setTimeout(getUrl, 1000);
         });
     })();
   }
 
-  _establish(info) {
+  #establish(info: TODO): TODO {
     // increase max event listeners so that localtunnel consumers don't get
     // warning messages as soon as they setup even one listener. See #71
     this.setMaxListeners(info.max_conn + (EventEmitter.defaultMaxListeners || 10));
 
-    this.tunnelCluster = new TunnelCluster(info);
+    this.#tunnelCluster = new TunnelCluster(info);
 
     // only emit the url the first time
-    this.tunnelCluster.once('open', () => {
+    this.#tunnelCluster.once('open', () => {
       this.emit('url', info.url);
     });
 
     // re-emit socket error
-    this.tunnelCluster.on('error', err => {
-      debug('got socket error', err.message);
+    this.#tunnelCluster.on('error', err => {
+      clientDebug('got socket error', err.message);
       this.emit('error', err);
     });
 
     let tunnelCount = 0;
 
     // track open count
-    this.tunnelCluster.on('open', tunnel => {
+    this.#tunnelCluster.on('open', tunnel => {
       tunnelCount++;
-      debug('tunnel open [total: %d]', tunnelCount);
+      clientDebug('tunnel open [total: %d]', tunnelCount);
 
       const closeHandler = () => {
         tunnel.destroy();
@@ -118,46 +131,46 @@ module.exports = class Tunnel extends EventEmitter {
     });
 
     // when a tunnel dies, open a new one
-    this.tunnelCluster.on('dead', () => {
+    this.#tunnelCluster.on('dead', () => {
       tunnelCount--;
-      debug('tunnel dead [total: %d]', tunnelCount);
+      clientDebug('tunnel dead [total: %d]', tunnelCount);
       if (this.closed) {
         return;
       }
-      this.tunnelCluster.open();
+      this.#tunnelCluster.open();
     });
 
-    this.tunnelCluster.on('request', req => {
+    this.#tunnelCluster.on('request', req => {
       this.emit('request', req);
     });
 
     // establish as many tunnels as allowed
     for (let count = 0; count < info.max_conn; ++count) {
-      this.tunnelCluster.open();
+      this.#tunnelCluster.open();
     }
   }
 
-  open(cb) {
-    this._init((err, info) => {
+  open(cb: TODO): void {
+    this.#init((err, info) => {
       if (err) {
         return cb(err);
       }
 
-      this.clientId = info.name;
-      this.url = info.url;
+      this.#clientId = info.name;
+      this.#url = info.url;
 
       // `cached_url` is only returned by proxy servers that support resource caching.
       if (info.cached_url) {
-        this.cachedUrl = info.cached_url;
+        this.#cachedUrl = info.cached_url;
       }
 
-      this._establish(info);
+      this.#establish(info);
       cb();
     });
   }
 
   close() {
-    this.closed = true;
+    this.#closed = true;
     this.emit('close');
   }
 };

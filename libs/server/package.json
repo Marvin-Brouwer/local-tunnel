@@ -1,0 +1,15 @@
+{
+  "name": "@local-tunnel/server",
+  "version": "3.0.0-alpha.1",
+  "description": "",
+  "main": "./dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Marvin Brouwer",
+  "license": "MIT",
+  "dependencies": {
+    "vite": "^5.1.3"
+  }
+}
