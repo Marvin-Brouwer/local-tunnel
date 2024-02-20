@@ -2,7 +2,7 @@ import { EventEmitter } from 'node:events';
 import fs from 'node:fs';
 import net from 'node:net';
 import tls from 'node:tls';
-import { HeaderHostTransformer } from './header-host-transformer';
+import { HeaderHostTransformer } from './header-host-transformer.ts.reference';
 import debug from 'debug'
 import type { Duplex } from 'node:stream';
 

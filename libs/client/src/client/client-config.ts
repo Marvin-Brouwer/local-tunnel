@@ -1,11 +1,11 @@
 // TODO ZOD?
 
-const randomDomain = Symbol.for('randomDomain');
+const randomDomain = Symbol.for('?new');
 
 type CertificateConfig = {
     pemLocation: string,
     keyLocation: string,
-    certificateAuthorityLocation: string,
+    certificateAuthorityLocation?: string,
 }
 
 type HttpsConfig = {
@@ -22,7 +22,7 @@ export type ClientConfig = {
 
     port: number
     hostName?: string
-    // TODO retrypolicy
+    // TODO retryPolicy
 
     server?: ServerHostConfig,
     https?: HttpsConfig
@@ -36,7 +36,7 @@ export type TunnelConfig = Required<Omit<ClientConfig, 'https'>> & {
 
 const defaultConfig = (port: number): TunnelConfig => ({
     port,
-    hostName: 'localtunnel.me',
+    hostName: 'localhost',
     server: {
         hostName: 'localtunnel.me',
         subDomain: randomDomain

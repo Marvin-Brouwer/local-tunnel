@@ -4,8 +4,9 @@ import { parse } from 'node:url';
 import { EventEmitter } from 'node:events';
 // TODO replace with fetch
 import axios from 'axios';
-import { TunnelCluster } from './tunnel-cluster';
+import { TunnelCluster } from './tunnel-cluster.ts.reference';
 import debug from 'debug'
+import { TunnelConfig } from '../client/client-config';
 
 const clientDebug = debug('localtunnel:client');
 
@@ -13,7 +14,7 @@ type TODO = any;
 
 export class Tunnel extends EventEmitter {
 
-  #opts: TODO;
+  #config: TunnelConfig;
   #tunnelCluster: TunnelCluster;
   #closed: boolean;
   #clientId: TODO;
@@ -23,50 +24,50 @@ export class Tunnel extends EventEmitter {
   public get closed(): boolean {
     return this.#closed
   }
+  public get url(): URL {
+    return new URL(this.#url);
+  }
 
-  constructor(opts = {}) {
-    super(opts);
-    this.#opts = opts;
+  constructor(config: TunnelConfig) {
+    super({ captureRejections: true });
+    this.#config = config;
     this.#closed = false;
-    // TODO move to config builder
-    if (!this.#opts.host) {
-      this.#opts.host = 'https://localtunnel.me';
-    }
   }
 
   #getInfo(body: TODO): TODO {
-    const { id, ip, port, url, cached_url, max_conn_count } = body;
-    const { host, port: local_port, local_host } = this.#opts;
-    const { local_https, local_cert, local_key, local_ca, allow_invalid_cert } = this.#opts;
+    const { id, ip, port: remote_port, url, cached_url, max_conn_count } = body;
+    const { server: { hostName }, port: local_port, hostName: local_host, https } = this.#config;
+    const { skipCertificateValidation, cert } = https ?? { };
     return {
       name: id,
       url,
       cached_url,
       max_conn: max_conn_count || 1,
-      remote_host: parse(host).hostname,
+      remote_host: `https://${hostName}`,
       remote_ip: ip,
-      remote_port: port,
+      remote_port,
       local_port,
       local_host,
-      local_https,
-      local_cert,
-      local_key,
-      local_ca,
-      allow_invalid_cert,
+      local_https: !!https,
+      local_cert: cert?.pemLocation,
+      local_key: cert?.keyLocation,
+      local_ca: cert?.certificateAuthorityLocation,
+      allow_invalid_cert: !!skipCertificateValidation,
     };
   }
 
   // initialize connection
   // callback with connection info
   #init(cb: TODO): void {
-    const opt = this.#opts;
     const getInfo = this.#getInfo.bind(this);
 
-    const baseUri = `${opt.host}/`;
     // no subdomain at first, maybe use requested domain
-    const assignedDomain = opt.subdomain;
+    const { subDomain } = this.#config.server ;
+    const assignedDomain = subDomain.constructor === Symbol
+      ? subDomain.description
+      : subDomain as string
     // where to quest
-    const uri = baseUri + (assignedDomain || '?new');
+    const uri = `${this.#config.hostName}/${assignedDomain}`;
 
     (function getUrl() {
       axios

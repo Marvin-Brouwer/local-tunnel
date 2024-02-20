@@ -1,9 +1,9 @@
 // TODO vi-test
 // Currently this is just an API example
 
-import { createLocalTunnelClient } from "../src";
+import { createLocalTunnel } from "../src";
 
-const client = createLocalTunnelClient({
+const tunnel = await createLocalTunnel({
     port: 4321,
     // host: 'localhost',
     // server: {
@@ -20,23 +20,29 @@ const client = createLocalTunnelClient({
     }
 })
 
-client.on('request', (method, path) => {
+tunnel.on('pipe-request', (method, path) => {
 	console.info(method, path)
 })
-client.on('error', (err) => {
+tunnel.on('pipe-error', (err) => {
 	console.error('ERROR', err)
 })
-client.on('initialized', (url) => {
-	console.info('Tunnel initialized', url)
+tunnel.on('tunnel-error', (err) => {
+	console.error('FAIL', err)
+})
+tunnel.on('tunnel-dead', (reason) => {
+	console.error('DEAD', reason)
+})
+tunnel.on('tunnel-open', () => {
+	console.info('Tunnel opened')
 });
-client.on('close', () => {
+tunnel.on('tunnel-close', () => {
 	console.info('Tunnel closed')
 });
 
-const tunnel = await client.listen();
-
 console.log(tunnel.url)
 console.log(tunnel.password)
+
+await tunnel.open();
 // TODO tunnel.selfValidate(), where it fils in the form for you?
 
-tunnel.close();
+await tunnel.close();
