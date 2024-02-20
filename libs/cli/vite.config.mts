@@ -13,11 +13,11 @@ export default defineConfig({
 		minify: !isDev,
 		target: ['ESNext'],
 		outDir: outputDir,
+		sourcemap: true,
         rollupOptions: {
 			output: {
 				compact: !isDev,
-				indent: isDev,
-				sourcemap: isDev
+				indent: isDev
 			}
 		},
 		lib: {

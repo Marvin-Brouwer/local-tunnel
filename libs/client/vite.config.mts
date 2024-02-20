@@ -18,14 +18,18 @@ export default defineConfig({
 		})
 	],
 	build: {
+		// https://github.com/vitejs/vite/issues/13926#issuecomment-1708536097
 		minify: !isDev,
 		target: ['ESNext'],
 		outDir: outputDir,
+		sourcemap: true,
         rollupOptions: {
+			external: [
+				/^node\:/
+			],
 			output: {
 				compact: !isDev,
 				indent: isDev,
-				sourcemap: isDev
 			}
 		},
 		lib: {
