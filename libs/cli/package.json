@@ -4,7 +4,7 @@
   "description": "",
   "main": "./dist/index.js",
   "scripts": {
-    "run-lt": "node ./lib/index.js --local-port 4321",
+    "run-lt": "node ./lib/index.js --local-port 4321 --local-https --skip-cert-val",
     "watch": "pnpm build --mode development --watch",
     "build": "vite build",
     "test": "echo \"Error: no test specified\" && exit 1"

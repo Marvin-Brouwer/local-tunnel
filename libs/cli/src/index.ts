@@ -56,7 +56,7 @@ async function startTunnel(_: never, command: Command, x, y, z){
     const printRequestInfo = command.optsWithGlobals().printRequests as boolean;
     const openUrlOnConnect = command.optsWithGlobals().openUrl as boolean;
 
-    const cert = (localCert !== undefined && localKey !== undefined)
+    const cert = (localCert === undefined || localKey === undefined)
         ? undefined
         : {
             pemLocation: localCert,
