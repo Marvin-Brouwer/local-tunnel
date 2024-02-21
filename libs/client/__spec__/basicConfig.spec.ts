@@ -8,7 +8,7 @@ const tunnel = await createLocalTunnel({
     // host: 'localhost',
     // server: {
     //     hostName: ...,
-    //     subDomain: ...
+    //     subdomain: ...
     // },
     https: {
         skipCertificateValidation: true,

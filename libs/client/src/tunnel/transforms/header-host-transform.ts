@@ -11,10 +11,10 @@ export class HeaderHostTransform extends Transform {
   ) {
     super();
     this.#replaced = false;
-    this.transform.bind(this);
+    this._transform.bind(this);
   }
 
-  protected transform(this: HeaderHostTransform, chunk: Uint8Array | string, encoding: BufferEncoding, callback: internal.TransformCallback): void {
+  override _transform(this: HeaderHostTransform, chunk: Uint8Array | string, _encoding: BufferEncoding, callback: internal.TransformCallback): void {
     
     if (this.#replaced) {
       return callback(null, chunk);

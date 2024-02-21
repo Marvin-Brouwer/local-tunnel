@@ -88,7 +88,7 @@ export class TunnelCluster {
     logger.enabled 
       && logger.log('establishing local connection to %s', format.localAddress(this.tunnelConfig));
 
-    if (logger.enabled && this.tunnelConfig.https.skipCertificateValidation) {
+    if (logger.enabled && this.tunnelConfig.https?.skipCertificateValidation) {
       logger.log('allowing invalid certificates');
     }
 
@@ -103,7 +103,11 @@ export class TunnelCluster {
     // connection to local http server
     const localSocket: Duplex = (() => {
 
-      if (!https) return net.connect(localSocketAddress);
+      if (!https) return net.connect({
+        ...localSocketAddress, 
+        allowHalfOpen: true,
+        keepAlive: true,
+      });
       
       const cert = !https.cert ? {} : {
         cert: fs.readFileSync(https.cert.pemLocation),

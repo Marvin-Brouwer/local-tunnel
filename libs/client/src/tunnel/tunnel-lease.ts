@@ -1,5 +1,7 @@
 import { TunnelConfig } from '../client/client-config';
 
+const randomDomain = Symbol.for('?new');
+
 export type TunnelLease = {
 
     id: string,
@@ -32,12 +34,10 @@ type TunnelLeaseResponse = {
 
 const getLeaseUrl = (config: TunnelConfig): string => {
     
-    const { subDomain } = config.server;
-    const assignedDomain = subDomain.constructor === Symbol
-      ? subDomain.description
-      : subDomain as string
+    const { subdomain } = config.server;
+    const assignedDomain = subdomain ?? randomDomain.description
       
-    return `${config.hostName}/${assignedDomain}`;
+    return `https://${config.server.hostName}/${assignedDomain}`;
 }
 
 export const getTunnelLease = async (config: TunnelConfig): Promise<TunnelLease>  => {
@@ -50,7 +50,7 @@ export const getTunnelLease = async (config: TunnelConfig): Promise<TunnelLease>
 
     // TODO ZOD
     const leaseResponse = await leaseFetchResponse.json() as TunnelLeaseResponse
-    const clientIp = await fetch('api.ipify.org')
+    const clientIp = await fetch('https://api.ipify.org')
         .then(response => response.text())
         .catch(err =>  {
             console.warn('Unable to determine tunnel password', err);

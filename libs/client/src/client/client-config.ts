@@ -1,7 +1,5 @@
 // TODO ZOD?
 
-const randomDomain = Symbol.for('?new');
-
 type CertificateConfig = {
     pemLocation: string,
     keyLocation: string,
@@ -15,7 +13,7 @@ type HttpsConfig = {
 
 type ServerHostConfig = {
     hostName?: string
-    subDomain?: string | typeof randomDomain
+    subdomain?: string
 }
 
 export type ClientConfig = {
@@ -39,12 +37,12 @@ const defaultConfig = (port: number): TunnelConfig => ({
     hostName: 'localhost',
     server: {
         hostName: 'localtunnel.me',
-        subDomain: randomDomain
+        subdomain: undefined
     },
     https: undefined
 })
 export const applyConfig = (config: ClientConfig): TunnelConfig => {
     // TODO Validate config
     
-    return Object.assign(defaultConfig(config.port), config)
+    return Object.assign({}, defaultConfig(config.port), JSON.parse(JSON.stringify(config)))
 }

@@ -2,6 +2,7 @@ import packageConfig from './package.json' assert { type: 'json' };
 import path from 'path';
 import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
+import { nodePolyfills } from 'vite-plugin-node-polyfills'
 
 const isDev = process.argv.join(' ').includes('--mode development');
 const srcFolder = path.resolve(__dirname, 'src');
@@ -12,6 +13,12 @@ const outputDir = 'dist';
 
 export default defineConfig({
 	plugins: [
+		nodePolyfills({
+		  include: [
+			'stream'
+		  ],
+		  protocolImports: true,
+		}),
 		dts({ 
 			entryRoot: srcFolder, 
 			outDir: path.join(outputDir, 'types')
