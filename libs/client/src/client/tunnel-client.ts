@@ -2,6 +2,7 @@ import { EventEmitter } from 'node:stream';
 import { applyConfig, type TunnelConfig, type ClientConfig } from './client-config';
 import { getTunnelLease, type TunnelLease } from '../tunnel/tunnel-lease';
 import { TunnelEventEmitter, TunnelEventListener } from '../tunnel/tunnel-events';
+import { TunnelCluster } from '../tunnel/tunnel-cluster';
 
 export const createLocalTunnel = async (config: ClientConfig): Promise<TunnelClient> => {
 
@@ -17,6 +18,8 @@ export const createLocalTunnel = async (config: ClientConfig): Promise<TunnelCli
 export class TunnelClient {
 
     #emitter: TunnelEventEmitter;
+    #cluster: TunnelCluster;
+
     #status: 'open' | 'close'
 
     public get status() {
@@ -35,6 +38,7 @@ export class TunnelClient {
     ) {
         this.#emitter = new EventEmitter({ captureRejections: true }) as TunnelEventEmitter;
         this.#emitter.setMaxListeners(tunnelLease.maximumConnections);
+        this.#cluster = new TunnelCluster(tunnelConfig, tunnelLease, this.#emitter);
     }
 
     public async open(): Promise<this> {
@@ -42,7 +46,9 @@ export class TunnelClient {
             console.warn('Tunnel was already open, noop.');
             return this;
         }
-        // TODO
+
+        await this.#cluster.open();
+
         return this;
     }
 
@@ -51,7 +57,9 @@ export class TunnelClient {
             console.warn('Tunnel was already closed, noop.');
             return this;
         }
-        // TODO
+        
+        await this.#cluster.close();
+
         return this;
     }
 

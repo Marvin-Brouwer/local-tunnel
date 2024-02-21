@@ -1,7 +1,7 @@
 // TODO vi-test
 // Currently this is just an API example
 
-import { createLocalTunnel } from "../src";
+import { createLocalTunnel } from "../src/index";
 
 const tunnel = await createLocalTunnel({
     port: 4321,

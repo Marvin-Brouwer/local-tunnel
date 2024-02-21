@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import net from 'node:net';
 import tls from 'node:tls';
-import debug from 'debug'
+import { createLogger } from '../logger'
 
 import { HeaderHostTransform } from './transforms/header-host-transform';
 
@@ -11,8 +11,7 @@ import type { TunnelLease } from './tunnel-lease';
 import type { TunnelEventEmitter } from './tunnel-events';
 
 // TODO this file can do with splitting up
-
-const clientDebug = debug('localtunnel:tunnel-cluster');
+const logger = createLogger('localtunnel:tunnel-cluster');
 const format = {
   remoteAddress: (tunnelLease: TunnelLease) => 
     `https://${tunnelLease.remote.target}:${tunnelLease.remote.port}`,
@@ -28,6 +27,8 @@ export class TunnelCluster {
   #emitter:  TunnelEventEmitter;
   #remoteEstablished: boolean;
   #localEstablished: boolean;
+  #remoteSocket: Duplex;
+  #localSocket: Duplex;
 
   constructor(
     private readonly tunnelConfig: TunnelConfig,
@@ -39,8 +40,8 @@ export class TunnelCluster {
 
   #connectRemote() {
 
-    clientDebug.enabled 
-      && clientDebug('establishing remote connection to %s', format.remoteAddress(this.tunnelLease));
+    logger.enabled 
+      && logger.log('establishing remote connection to %s', format.remoteAddress(this.tunnelLease));
 
     this.#remoteEstablished = false;
     const remoteSocketAddress = {
@@ -53,7 +54,7 @@ export class TunnelCluster {
       
     // TODO specific errors
     remoteSocket.on('error', (err: DuplexConnectionError) => {
-      clientDebug.enabled && clientDebug('remoteSocket error \n %j', err.message);
+      logger.enabled && logger.log('remoteSocket error \n %j', err.message);
 
       // emit connection refused errors immediately, because they
       // indicate that the tunnel can't be established.
@@ -82,13 +83,13 @@ export class TunnelCluster {
     return remoteSocket.pause();
   }
   
-  #connectLocal(remoteSocket: Duplex) {
+  #connectLocal() {
 
-    clientDebug.enabled 
-      && clientDebug('establishing local connection to %s', format.localAddress(this.tunnelConfig));
+    logger.enabled 
+      && logger.log('establishing local connection to %s', format.localAddress(this.tunnelConfig));
 
-    if (clientDebug.enabled && this.tunnelConfig.https.skipCertificateValidation) {
-      clientDebug('allowing invalid certificates');
+    if (logger.enabled && this.tunnelConfig.https.skipCertificateValidation) {
+      logger.log('allowing invalid certificates');
     }
 
     this.#localEstablished = false;
@@ -120,22 +121,22 @@ export class TunnelCluster {
     })();
 
     localSocket.once('connect', () => {
-      clientDebug('connected locally');
+      logger.log('connected locally');
       this.#localEstablished = true;
-      remoteSocket.resume();
+      this.#remoteSocket.resume();
 
-      let stream = remoteSocket;
+      let stream = this.#remoteSocket;
 
       // Use host header transform to replace the host header
-      clientDebug.enabled && clientDebug('transform Host header to %s', this.tunnelConfig.hostName);
-      stream = remoteSocket.pipe(new HeaderHostTransform(this.tunnelConfig));
+      logger.enabled && logger.log('transform Host header to %s', this.tunnelConfig.hostName);
+      stream = this.#remoteSocket.pipe(new HeaderHostTransform(this.tunnelConfig));
 
       // Connect the streams
-      stream.pipe(localSocket).pipe(remoteSocket);
+      stream.pipe(localSocket).pipe(this.#remoteSocket);
 
       // when local closes, also get a new remote
       localSocket.once('close', hadError => {
-        clientDebug.enabled && clientDebug('local connection closed [%s]', hadError);
+        logger.enabled && logger.log('local connection closed [%s]', hadError);
       });
     });
 
@@ -144,54 +145,54 @@ export class TunnelCluster {
 
   open() {
 
-    debug.enabled && clientDebug(
+    logger.enabled && logger.log(
       'establishing tunnel %s <> %s',
       format.remoteAddress(this.tunnelLease),
       format.localAddress(this.tunnelConfig)
     );
 
     // connection to localtunnel server
-    const remoteSocket = this.#connectRemote();
-    if (remoteSocket.destroyed) {
-      clientDebug('remote destroyed');
+    this.#remoteSocket = this.#connectRemote();
+    if (this.#remoteSocket.destroyed) {
+      logger.log('remote destroyed');
       this.#emitter.emit('tunnel-dead', 'Remote server not connected')
       return;
     }
-    let localSocket = this.#connectLocal(remoteSocket);
+    this.#localSocket = this.#connectLocal();
     
     const remoteClose = () => {
-      clientDebug('remote close');
-      localSocket.end();
+      logger.log('remote close');
+      this.#localSocket.end();
       this.#emitter.emit('tunnel-dead', 'remote server closed unexpectedly');
-      localSocket.destroy();
+      this.#localSocket.destroy();
       try {
-        remoteSocket.destroy();
+        this.#remoteSocket.destroy();
       } finally {
         // do nothing
       }
     }
 
-    remoteSocket.once('close', remoteClose);
+    this.#remoteSocket.once('close', remoteClose);
 
     // TODO some languages have single threaded servers which makes opening up
     // multiple local connections impossible. We need a smarter way to scale
     // and adjust for such instances to avoid beating on the door of the server
-    localSocket.once('error', (err: DuplexConnectionError) => {
-      clientDebug('local error %s', err.message);
-      localSocket.end();
+    this.#localSocket.once('error', (err: DuplexConnectionError) => {
+      logger.log('local error %s', err.message);
+      this.#localSocket.end();
 
-      remoteSocket.removeListener('close', remoteClose);
+      this.#remoteSocket.removeListener('close', remoteClose);
 
       if (err.code !== 'ECONNREFUSED'
           && err.code !== 'ECONNRESET') {
-        return remoteSocket.end();
+        return this.#remoteSocket.end();
       }
 
       // retrying connection to local server
-      setTimeout(() => localSocket = this.#connectLocal(remoteSocket), 1000);
+      setTimeout(() => this.#localSocket = this.#connectLocal(), 1000);
     });
 
-    remoteSocket.on('data', data => {
+    this.#remoteSocket.on('data', data => {
       const match = data.toString().match(/^(\w+) (\S+)/);
       if (match) {
         this.#emitter.emit('pipe-request',
@@ -201,10 +202,21 @@ export class TunnelCluster {
       }
     });
 
-    // tunnel is considered open when remote connects
-    remoteSocket.once('connect', () => {
-      this.#remoteEstablished = true;
-      this.#emitter.emit('tunnel-open');
-    });
+    return new Promise<void>((resolve) => {
+      // tunnel is considered open when remote connects
+      this.#remoteSocket.once('connect', () => {
+        this.#remoteEstablished = true;
+        resolve();
+        this.#emitter.emit('tunnel-open');
+      });
+    })
+  }
+  
+  close() {
+    return new Promise<void>((resolve) => {
+      this.#remoteSocket.end(
+        () => this.#localSocket.end(resolve)
+      );
+    })
   }
 };
