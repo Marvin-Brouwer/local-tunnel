@@ -1,0 +1,4 @@
+[submodule "localtunnel-server"]
+	path = libs/server/localtunnel-server
+	url = https://github.com/localtunnel/server.git
+	branch = tags/v0.0.8

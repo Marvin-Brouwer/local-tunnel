@@ -34,10 +34,11 @@ type TunnelLeaseResponse = {
 
 const getLeaseUrl = (config: TunnelConfig): string => {
     
+    const schema = import.meta.env.VITE_SERVER_SCHEMA ?? 'https';
     const { subdomain } = config.server;
     const assignedDomain = subdomain ?? randomDomain.description
       
-    return `https://${config.server.hostName}/${assignedDomain}`;
+    return `${schema}://${config.server.hostName}/${assignedDomain}`;
 }
 
 export const getTunnelLease = async (config: TunnelConfig): Promise<TunnelLease>  => {
