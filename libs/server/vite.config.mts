@@ -11,6 +11,7 @@ export default defineConfig({
 	resolve: {
 		alias: {
 			'debug':  path.resolve(__dirname, 'localtunnel-server', './node_modules/debug/src/index.js'),
+			'./localtunnel-server/node_modules/debug':  path.resolve(__dirname, 'localtunnel-server', './node_modules/debug/src/index.js'),
 			'koa': path.resolve(__dirname, 'localtunnel-server', './node_modules/koa'),
 			'koa-router': path.resolve(__dirname, 'localtunnel-server', './node_modules/koa-router'),
 			'tldjs': path.resolve(__dirname, 'localtunnel-server', './node_modules/tldjs'),
@@ -27,7 +28,7 @@ export default defineConfig({
         rollupOptions: {
 			strictDeprecations: false,
 			external: [
-				/node_modules\/debug/,
+				/server\/localtunnel-server\/node_modules\/debug/,
 				/node_modules\/koa/,
 				/node_modules\/koa-router/,
 				/node_modules\/tldjs/,
