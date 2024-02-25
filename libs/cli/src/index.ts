@@ -91,6 +91,9 @@ async function startTunnel(_: never, command: Command, x, y, z){
     tunnel.on('tunnel-error', (err) => {
         console.error('ERROR', err)
     })
+    tunnel.on('tunnel-dead', () => {
+        process.exit(-1);
+    })
 
     console.info(`tunneling ${https ? 'https' : 'http'}://${host}:${port} <> ${tunnel.requestedUrl}`);
     if (tunnel.password) console.info(`password: ${tunnel.password}`);

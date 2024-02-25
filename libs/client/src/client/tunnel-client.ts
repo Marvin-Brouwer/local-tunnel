@@ -6,6 +6,7 @@ import { createUpstreamConnection } from '../tunnel/upstream-connection';
 import { createDownstreamConnection } from '../tunnel/downstream-connection';
 import { createFallbackConnection } from '../tunnel/fallback-connection';
 import '../tunnel/transforms/header-host-transform';
+import { type DuplexConnectionError } from '../tunnel/errors';
 
 // TODO, make the tunnel lease a constructor parameter again if we can't get the reconnect to work the way we'd like.
 
@@ -81,6 +82,16 @@ export class TunnelClient {
         
         this.#status = 'open';
 
+        this.#upstream.on('error', async (err: DuplexConnectionError) => {
+            // If the upstream server get's closed
+            if (err.code === 'ECONNRESET') {
+                this.#emitter.emit('upstream-error', err);
+                await this.close();
+                this.#emitter.emit('tunnel-dead');
+                return;
+            }
+        })
+
         const connectDownstream =  async () => {
         
             this.#downstream = await createDownstreamConnection(this.tunnelConfig, this.#emitter);
@@ -115,6 +126,26 @@ export class TunnelClient {
                 this.#upstream
                     .transformHeaderHost(this.tunnelConfig)
                     .pipe(this.#downstream)
+                    // .pipe(new Transform({
+                    //     emitClose: true,
+                    //     final(callback) {
+                    //         this.pause();
+                            
+                    //     },
+                    //     transform(chunk, encoding, callback) {
+                    //         const data = chunk.toString();
+                    //         if (!data.includes('?keepalive')) 
+                    //         console.log('tf', data);
+                    //         callback(null, chunk);                            
+                    //     },
+                    //     // write(c, e, cb) {
+                    //     //     const data = c.toString();
+                    //     //     if (!data.includes('?keepalive')) 
+                    //     //         console.log('write', data);
+                    //     //     this.push(c, e);
+                    //     //     cb();
+                    //     // }
+                    // }))
                     .pipe(this.#upstream);
 
                 this.#downstream.once('finish', downStreamConnectError);
@@ -135,10 +166,16 @@ export class TunnelClient {
             console.warn('Tunnel was already closed, noop.');
             return this;
         }
+        
         this.#status = 'closed';
 
         // TODO, better to close all of them instead of misusing the emitter
         this.#emitter.emit('app-close');
+        await Promise.all([
+            new Promise(r => this.#fallback.end(r)),
+            new Promise(r => this.#upstream.end(r)),
+            new Promise(r => this.#downstream.end(r))
+        ])
 
         return this;
     }

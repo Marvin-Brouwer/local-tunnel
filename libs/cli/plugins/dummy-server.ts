@@ -36,6 +36,11 @@ function serveDummy (options: RollupServeOptions): Plugin {
       (fakeError as any).code = 'ECONNREFUSED';
       response.destroy(fakeError);
     }
+    if (urlPath === '/ECONNRESET') {
+      const fakeError = new Error('Faking connection reset');
+      (fakeError as any).code = 'ECONNRESET';
+      response.destroy(fakeError);
+    }
 
     const content = `
       <html>
@@ -44,7 +49,15 @@ function serveDummy (options: RollupServeOptions): Plugin {
         </head>
         <body>
           <h1>Test response</h1>
-          <p><pre>${urlPath}</pre></p>
+          <p>
+            Path: <br/>
+            <pre>${urlPath}</pre>
+          </p>
+          <p>
+            Test responses: <br />
+            <a href="./ECONNREFUSED">ECONNREFUSED</a> <br />
+            <a href="./ECONNRESET">ECONNRESET</a>
+          </p>
         </body>
       </html>
     `;

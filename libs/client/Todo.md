@@ -18,3 +18,7 @@ It may be neat to use ZOD to validate the configuration for things like urls and
 ## Specialized error classes
 
 Just to make the errors self-documenting, it makes sense to have custom errors for scenarios.  
+
+## Work with chained `AbortSignal`s
+
+We should work with `AbortSignal`s so we can cancel the program from the cli, and easily break on disconnect.

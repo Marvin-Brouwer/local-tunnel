@@ -51,8 +51,6 @@ const createConnection = (tunnelLease: TunnelLease, emitter: TunnelEventEmitter)
 	logger.enabled
 		&& logger.log('establishing remote connection to %s', format.remoteAddress(tunnelLease));
 
-	let remoteEstablished = false;
-
 	const remoteSocket: Duplex = net
 		.createConnection({
 			host: tunnelLease.remote.target,
@@ -60,14 +58,6 @@ const createConnection = (tunnelLease: TunnelLease, emitter: TunnelEventEmitter)
 			allowHalfOpen: true,
 			keepAlive: true
 		});
-
-	// TODO specific errors
-	remoteSocket.on('error', (err: DuplexConnectionError) => {
-		logger.enabled && logger.log('socket error %j', err);
-
-		console.log(err)
-	});
-
 
 	const initialConnectionError = (e: DuplexConnectionError) => {
 		emitter.emit('initial-connection-failed');
@@ -77,10 +67,20 @@ const createConnection = (tunnelLease: TunnelLease, emitter: TunnelEventEmitter)
 
 	remoteSocket.once('error', initialConnectionError);
 	remoteSocket.once('connect', () => {
+		remoteSocket.once('data', () => 
+			remoteSocket.off('error', initialConnectionError)
+		);
+
 		logger.enabled
 			&& logger.log('connection to %s UP', format.remoteAddress(tunnelLease));
 
-		remoteEstablished = true;
+		// TODO emit specific errors
+		remoteSocket.on('error', (err: DuplexConnectionError) => {
+			// This is handled in the tunnel-client
+			if (err.code === 'ECONNRESET') return;
+			logger.enabled && logger.log('socket error %j', err);
+		});
+
 		resolve(remoteSocket);
 	});
 });
