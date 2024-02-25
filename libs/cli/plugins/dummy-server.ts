@@ -26,11 +26,14 @@ function serveDummy (options: RollupServeOptions): Plugin {
   options.port = options.port
 
   const requestListener: RequestListener = (request, response) => {
+
     // Remove querystring
     const unsafePath = decodeURI(request.url.split('?')[0])
 
     // Don't allow path traversal
     const urlPath = posix.normalize(unsafePath);
+    console.log('request', urlPath);
+
     if (urlPath === '/ECONNREFUSED') {
       const fakeError = new Error('Faking connection refused');
       (fakeError as any).code = 'ECONNREFUSED';

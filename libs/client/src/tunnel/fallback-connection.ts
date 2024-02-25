@@ -3,7 +3,7 @@ import { Duplex } from "node:stream";
 import net, { AddressInfo } from 'node:net';
 import { DuplexConnectionError } from "./errors";
 import { type TunnelEventEmitter } from './tunnel-events';
-import { createServer, type Server } from 'node:http'
+import { createServer, IncomingMessage, type Server } from 'node:http'
 import { type TunnelConfig } from '../client/client-config';
 import htmlResponse from './fallback-connection.html?raw';
 import { posix } from "node:path";
@@ -63,30 +63,38 @@ const createHost = (tunnelConfig: TunnelConfig, tunnelLease: TunnelLease, emitte
 		}
 
 		try {
+			const body = await getRequestBody(request);
 			await fetch(format.localAddress(tunnelConfig) + urlPath, { 
-				method: request.method ,
+				method: request.method,
+				mode: 'cors',
+				body,
+				referrer: request.headers.referer,
 				headers: {
-					// ...request.headersDistinct,
+					...mapHeaders(request.rawHeaders),
 					'x-forwarded-host': tunnelLease.cachedTunnelUrl?.host ?? tunnelLease.tunnelUrl.host
 				}
 			})
 				.then(async fetchResponse => {
-					console.log('response', fetchResponse)
 					response.statusCode = fetchResponse.status;
 					response.statusMessage = fetchResponse.statusText;
 					const data = await fetchResponse.arrayBuffer();
 					if (response.writableEnded) return;
-					response.write(Buffer.from(data), e => console.log('e', e));
+					await new Promise<void>((res,rej) => response.write(Buffer.from(data), e => {
+						if (e) rej(e);
+						res();
+					}));
 					return response.end();
 				})
 				.catch(err => {
-					console.log('err', err)
+					connectionLogger.enabled
+						&& connectionLogger.log('unhandled error occurred while forwarding request %j', err)
 					response.write(unavailableResponse);
 					return response.end();
 				})
 
 		} catch (unintendedError) {
-			console.log('unintendedError', unintendedError)
+			connectionLogger.enabled
+				&& connectionLogger.log('unknown error occurred while forwarding request %j', unintendedError)
 			response.write(unavailableResponse);
 			return response.end();
 		}
@@ -141,3 +149,28 @@ const createConnection = (address: AddressInfo, emitter: TunnelEventEmitter) => 
 		resolve(remoteSocket);
 	});
 });
+
+// TODO this could be more efficient
+const mapHeaders = (headers: string[]): string[][] => {
+	let headerString = '';
+	headers.forEach((element, index) => {
+		headerString += element;
+		if (index === headers.length -1) return;
+
+		if (index % 2 !== 0) headerString += '\n'
+		else headerString += ': ';
+	});
+
+	return headerString
+		.split('\n')
+		.map(rec => rec.split(': '));
+}
+
+const getRequestBody = async (request: IncomingMessage): Promise<string | undefined> => {
+	if (request.method !== 'POST') return undefined;
+
+	return await new Promise(resolve => request.on('data', function(chunk) {
+		console.log("Received body data:");
+		resolve(chunk.toString());
+	}));
+}
