@@ -6,13 +6,15 @@ import { type TunnelEventEmitter } from './tunnel-events';
 import { createServer, type Server } from 'node:http'
 import { type TunnelConfig } from '../client/client-config';
 import htmlResponse from './fallback-connection.html?raw';
+import { posix } from "node:path";
+import { TunnelLease } from "./tunnel-lease";
 
 const connectionLogger = createLogger('localtunnel:fallback:connection');
 const hostLogger = createLogger('localtunnel:fallback:host');
 
-export const createFallbackConnection = async (tunnelConfig: TunnelConfig, emitter: TunnelEventEmitter) => {
+export const createFallbackConnection = async (tunnelConfig: TunnelConfig, tunnelLease: TunnelLease, emitter: TunnelEventEmitter) => {
 
-	let host = await createHost(tunnelConfig, emitter);
+	let host = await createHost(tunnelConfig, tunnelLease, emitter);
     const address = (host.address() as AddressInfo);
 	let connection = await createConnection(address, emitter);
 
@@ -43,16 +45,56 @@ export const createFallbackConnection = async (tunnelConfig: TunnelConfig, emitt
 	return connection;
 };
 
-const createHost = (tunnelConfig: TunnelConfig, emitter: TunnelEventEmitter) => new Promise<Server>((resolve, reject) => {
+const createHost = (tunnelConfig: TunnelConfig, tunnelLease: TunnelLease, emitter: TunnelEventEmitter) => new Promise<Server>((resolve, reject) => {
 
 	hostLogger.enabled
 		&& hostLogger.log('establishing fallback host');
 
-    const response = htmlResponse.replaceAll('${address}', format.localAddress(tunnelConfig));
+    const unavailableResponse = htmlResponse
+		.replaceAll('${address}', format.localAddress(tunnelConfig));
 
-	const fallbackHost = createServer((req, res) => {
-        res.write(response);
-        res.end();
+	const fallbackHost = createServer(async (request, response) => {
+		const unsafePath = decodeURI(request.url.split('?')[0])
+		const keepalive = request.url.split('?')[1] === 'keepalive'
+		const urlPath = posix.normalize(unsafePath);
+
+		if (request.method === 'OPTIONS' && keepalive) {
+			return response.end();
+		}
+
+		try {
+			await fetch(format.localAddress(tunnelConfig) + urlPath, { 
+				method: request.method ,
+				headers: {
+					// ...request.headersDistinct,
+					'x-forwarded-host': tunnelLease.cachedTunnelUrl?.host ?? tunnelLease.tunnelUrl.host
+				}
+			})
+				.then(async fetchResponse => {
+					console.log('response', fetchResponse)
+					response.statusCode = fetchResponse.status;
+					response.statusMessage = fetchResponse.statusText;
+					const data = await fetchResponse.arrayBuffer();
+					if (response.writableEnded) return;
+					response.write(Buffer.from(data), e => console.log('e', e));
+					return response.end();
+				})
+				.catch(err => {
+					console.log('err', err)
+					response.write(unavailableResponse);
+					return response.end();
+				})
+
+		} catch (unintendedError) {
+			console.log('unintendedError', unintendedError)
+			response.write(unavailableResponse);
+			return response.end();
+		}
+
+		if (response.writableEnded) return;
+
+        response.write(unavailableResponse);
+        response.end();
     });
 
 

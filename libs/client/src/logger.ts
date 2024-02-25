@@ -26,8 +26,10 @@ if (import.meta.env.VITE_DEBUG) {
 export const createLogger = loggerFactory;
 
 export const format = {
-    remoteAddress: (tunnelLease: TunnelLease) => 
-      `https://${tunnelLease.remote.target}:${tunnelLease.remote.port}`,
+    remoteAddress: (tunnelLease: TunnelLease) => {
+        const schema = import.meta.env.VITE_SERVER_SCHEMA ?? 'https';
+        return `${schema}://${tunnelLease.remote.target}:${tunnelLease.remote.port}`
+    },
     localAddress: (tunnelConfig: TunnelConfig) => 
       `${!!tunnelConfig.https ? 'https' : 'http'}://${tunnelConfig.hostName}:${tunnelConfig.port}`,
     address: (addressInfo: AddressInfo) => {

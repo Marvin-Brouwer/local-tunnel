@@ -42,10 +42,21 @@ function serveDummy (options: RollupServeOptions): Plugin {
       response.destroy(fakeError);
     }
 
+    const canonical = 
+      request.headers['x-forwarded-host'] ??
+      `//${request.headers.host ?? (`localhost:${options.port}`)}`; 
+
     const content = `
       <html>
         <head>
+          <meta charset="utf-8" />
+          <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+          <meta name="HandheldFriendly" content="true" />
+          <meta name="generator" content="dummy-server" />
           <title>${urlPath}</title>
+          <link rel="canonical" href=${canonical} />
+          <base href=${canonical} />
         </head>
         <body>
           <h1>Test response</h1>

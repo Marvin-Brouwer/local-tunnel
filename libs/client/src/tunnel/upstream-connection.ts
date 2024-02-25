@@ -13,7 +13,7 @@ export const createUpstreamConnection = async (tunnelLease: TunnelLease, emitter
 
 	// This seems to be necessary to prevent the tunnel from closing, event though keepalive is set to true
 	const intervalHandle = setInterval(() => {
-		fetch(`${tunnelLease.tunnelUrl}?keepalive`).catch(() => {
+		fetch(`${tunnelLease.tunnelUrl}?keepalive`, { method: 'options' }).catch(() => {
 			// don't care about any error.
 		})
 	}, 2000);

@@ -13,9 +13,11 @@ import { type DuplexConnectionError } from '../tunnel/errors';
 export const createLocalTunnel = async (config: ClientConfig): Promise<TunnelClient> => {
 
     const tunnelConfig = applyConfig(config);
+    const tunnelLease = await getTunnelLease(tunnelConfig);
 
     return new TunnelClient(
-        tunnelConfig
+        tunnelConfig,
+        tunnelLease
     )
 }
 
@@ -26,26 +28,25 @@ export class TunnelClient {
     #downstream: Duplex;
     #fallback: Duplex;
 
-    private tunnelLease: TunnelLease | undefined;
-
     #status: 'open' | 'closed' | 'reconnecting' | 'connecting'
 
     public get status() {
         return this.#status
     }
     public get url() {
-        return this.tunnelLease?.tunnelUrl ?? '[not connected]'
+        return this.tunnelLease.tunnelUrl
     }
     public get requestedUrl() {
         const schema = import.meta.env.VITE_SERVER_SCHEMA ?? 'https';
         return `${schema}://${this.tunnelConfig.server.subdomain ?? '[random]'}.${this.tunnelConfig.server.hostName}`
     }
     public get password() {
-        return this.tunnelLease?.client.publicIp
+        return this.tunnelLease.client.publicIp
     }
 
     constructor(
-        readonly tunnelConfig: TunnelConfig
+        readonly tunnelConfig: TunnelConfig,
+        readonly tunnelLease: TunnelLease
     ) {
         this.#emitter = new EventEmitter({ captureRejections: true }) as TunnelEventEmitter;
     }
@@ -61,15 +62,14 @@ export class TunnelClient {
         }
         
         this.#status === 'connecting';
-        this.#fallback = await createFallbackConnection(this.tunnelConfig, this.#emitter);
+        this.#fallback = await createFallbackConnection(this.tunnelConfig, this.tunnelLease, this.#emitter);
         this.#fallback.pause();
 
         return this.#openConnection();
     }
 
     async #openConnection(): Promise<this> {
-        
-        this.tunnelLease = await getTunnelLease(this.tunnelConfig);
+
         this.#emitter.setMaxListeners(this.tunnelLease.maximumConnections);
 
         this.#upstream = await createUpstreamConnection(this.tunnelLease, this.#emitter);
@@ -156,7 +156,7 @@ export class TunnelClient {
             this.#downstream.once('connect', downstreamConnected);
         }
 
-        await connectDownstream();
+        // await connectDownstream();
 
         return this;
     }
