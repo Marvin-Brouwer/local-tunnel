@@ -10,25 +10,20 @@ export type RollupServeOptions = {
   host?: string
 
   /**
-   * Change the port that the server will listen on (default: `10001`)
+   * Set the port that the server will listen on
    */
-  port?: number | string
-
-  /**
-   * Execute function after server has begun listening
-   */
-  onListening?: (server: Server) => void
+  port: number
 }
 
 let server: Server;
 
 /**
- * Serve a dummy endpoint, mirroring the path requested
+ * Serve a dummy endpoint, mirroring the path requested.
+ * @see https://github.com/thgh/rollup-plugin-serve/
  */
-function serveDummy (options: RollupServeOptions = { }): Plugin {
+function serveDummy (options: RollupServeOptions): Plugin {
 
-  options.port = options.port || 10001
-  options.onListening = options.onListening || function noop () { }
+  options.port = options.port
 
   const requestListener = (request, response) => {
     // Remove querystring
@@ -65,7 +60,6 @@ function serveDummy (options: RollupServeOptions = { }): Plugin {
   server = createServer(requestListener)
   server.listen({ port: options.port, host: options.host }, () => {
     console.info(`dummy server running on ${url}`);
-    options.onListening(server);
   });
 
 
