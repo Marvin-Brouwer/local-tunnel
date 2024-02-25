@@ -1,5 +1,7 @@
 import { EventEmitter } from "node:stream"
 
+// TODO clean up and implement custom errors
+
 export type TunnelEventListener<T> = 
     & TunnelOpenHandler<T> 
     & TunnelCloseHandler<T>

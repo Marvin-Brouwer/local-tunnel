@@ -5,7 +5,7 @@
   "main": "./dist/index.js",
   "scripts": {
     "lt:8080": "pnpm lt --local-port 8080 --remote-host localtunnel-dev --subdomain 8080",
-    "lt:invalid": "pnpm lt --local-port 8008 --remote-host localtunnel-dev --subdomain 8008",
+    "lt:8008": "pnpm lt --local-port 8008 --remote-host localtunnel-dev --subdomain 8008",
     "lt:astro": "pnpm lt --local-port 4321 --local-https --skip-cert-val --remote-host localtunnel-dev --subdomain astro",
     "lt": "node ./lib/index.js",
     "build": "vite build",

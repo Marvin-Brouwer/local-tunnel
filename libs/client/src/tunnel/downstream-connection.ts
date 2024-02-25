@@ -8,7 +8,7 @@ import fs from 'node:fs';
 import tls from 'node:tls';
 
 
-const logger = createLogger('localtunnel:downstream-connection');
+const logger = createLogger('localtunnel:downstream:connection');
 
 export const createDownstreamConnection = async (tunnelConfig: TunnelConfig, emitter: TunnelEventEmitter) => {
 
@@ -20,24 +20,22 @@ export const createDownstreamConnection = async (tunnelConfig: TunnelConfig, emi
 		connection.destroy();
 	})
 	connection.on('close', async () => {
-		console.log('close');
-		// connection.destroy();
-		// connection = await createUpstreamConnection(tunnelLease, emitter);
+		console.log('downstream', 'close');
 	})
 	connection.on('drain', async () => {
-		console.log('drain');
+		console.log('downstream', 'drain');
 	})
 	connection.on('end', async () => {
-		console.log('end');
+		console.log('downstream', 'end');
 	})
 	connection.on('disconnect', async () => {
-		console.log('disconnect');
+		console.log('downstream', 'disconnect');
 	})
 	connection.on('finish', async () => {
-		console.log('finish');
+		console.log('downstream', 'finish');
 	})
 	connection.on('error', async (e) => {
-		console.log('e', e);
+		console.log('downstream', 'e', e);
 	})
 
 	return connection;
@@ -48,7 +46,6 @@ const createConnection = (tunnelConfig: TunnelConfig, emitter: TunnelEventEmitte
 	logger.enabled
 		&& logger.log('establishing local connection to %s', format.localAddress(tunnelConfig));
 
-	let localEstablished = false;
 	const localSocketAddress = {
 		host: tunnelConfig.hostName,
 		port: tunnelConfig.port,
@@ -88,23 +85,8 @@ const createConnection = (tunnelConfig: TunnelConfig, emitter: TunnelEventEmitte
 	remoteSocket.on('error', (err: DuplexConnectionError) => {
 		logger.enabled && logger.log('socket error %j', err);
 
-		// emit connection refused errors immediately, because they
-		// indicate that the tunnel can't be established.
-		if (err.code === 'ECONNREFUSED' && !localEstablished) {
-			reject(new Error(
-				`connection refused: ${format.localAddress(tunnelConfig)} (check your firewall settings)`
-			));
-			return;
-		}
-
 		console.log(err)
 	});
-
-	remoteSocket.once('connect', () => {
-		logger.enabled
-			&& logger.log('connection to %s UP', format.localAddress(tunnelConfig));
-
-		localEstablished = true;
-		resolve(remoteSocket);
-	});
+	
+	resolve(remoteSocket);
 });

@@ -1,0 +1,44 @@
+<html>
+    <head>
+        <title>Tunnel to ${format.localAddress(tunnelConfig)}</title>
+        <style>
+            code {
+                display: inline-block;
+                background: #efefef;
+                border-radius: 0.5em 0.5em 0.5em 0.5em;
+                padding: 0.1em 0.2em;
+                user-select: text;
+            }
+        </style>
+        <script>
+            const addressElement = () => document
+                .getElementById('address');
+
+            function selectText(node) {
+            
+                if (document.body.createTextRange) {
+                    const range = document.body.createTextRange();
+                    range.moveToElementText(node);
+                    range.select();
+                } else if (window.getSelection) {
+                    const selection = window.getSelection();
+                    const range = document.createRange();
+                    range.selectNodeContents(node);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                } else {
+                    console.warn("Could not select text in node: Unsupported browser.");
+                }
+            }
+
+            function load() {
+                addressElement().addEventListener('dblclick', () => selectText(addressElement()));
+            }
+        </script>
+    </head>
+    <body onload="load()">
+        <h1>Connection error</h1>
+        <p>Failed to connect to <span><code id="address">${address}</code></span>.</p>
+        <p>Please make sure the host is available, or check your firewall settings. </p>
+    </body>
+</html>

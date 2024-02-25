@@ -1,34 +1,35 @@
-import internal, { Transform } from 'node:stream'
+import { Duplex } from 'node:stream'
 import { TunnelConfig } from '../../client/client-config';
+import './pipe-transform'
+import { type TransformFunction } from './pipe-transform';
 
-export class HeaderHostTransform extends Transform {
-
-  #replaced: boolean;
-  static #hostHeaderMatch = /(\r\n[Hh]ost: )\S+/;
-
-  constructor(
-    private readonly config: TunnelConfig
-  ) {
-    super();
-    this.#replaced = false;
-    this._transform.bind(this);
-  }
-
-  override _transform(this: HeaderHostTransform, chunk: Uint8Array | string, _encoding: BufferEncoding, callback: internal.TransformCallback): void {
-    
-    if (this.#replaced) {
-      return callback(null, chunk);
-    }
-
-    // TODO, there has to be a more readable approach
-    const replacedData = chunk
-      .toString()
-      .replace(HeaderHostTransform.#hostHeaderMatch, (_match, $1) => {
-        return $1 + this.config.server.hostName;
-      })
-
-    this.#replaced = true;
-    
-    callback(null, replacedData);
-  }
+declare module 'node:stream' {
+	interface Duplex {
+		transformHeaderHost: (this: Duplex, config: TunnelConfig) => Duplex
+	}
 }
+
+const newLineMatch = /(?:\r\n|\r|\n)/g;
+const transformHeaderHost = (config: TunnelConfig): TransformFunction => (chunk, _encoding, callback) => {
+	const data = chunk
+		.toString()
+		.split(newLineMatch)
+		.map((line) => {
+			if (!line.toLowerCase().startsWith('host:')) return line;
+			if (config.https && config.port == 443) return `Host: ${config.hostName}`;
+			if (!config.https && config.port == 80) return `Host: ${config.hostName}`;
+			return `Host: ${config.hostName}:${config.port}`;
+		});
+
+	callback(null, Buffer.from(data.join('\r\n')));
+}
+
+Object.defineProperty(Duplex.prototype, 'transformHeaderHost', {
+	value: function (config: TunnelConfig): Duplex {
+		const duplex = this as Duplex;
+		return duplex.pipeTransform(transformHeaderHost(config))
+	},
+	writable: false,
+	enumerable: false,
+	configurable: true
+})

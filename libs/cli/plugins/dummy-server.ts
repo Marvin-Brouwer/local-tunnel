@@ -1,4 +1,4 @@
-import { createServer, type Server } from 'node:http'
+import { createServer, type RequestListener, type Server } from 'node:http'
 import { posix } from 'node:path'
 import { type Plugin } from 'rollup'
 
@@ -25,12 +25,17 @@ function serveDummy (options: RollupServeOptions): Plugin {
 
   options.port = options.port
 
-  const requestListener = (request, response) => {
+  const requestListener: RequestListener = (request, response) => {
     // Remove querystring
     const unsafePath = decodeURI(request.url.split('?')[0])
 
     // Don't allow path traversal
     const urlPath = posix.normalize(unsafePath);
+    if (urlPath === '/ECONNREFUSED') {
+      const fakeError = new Error('Faking connection refused');
+      (fakeError as any).code = 'ECONNREFUSED';
+      response.destroy(fakeError);
+    }
 
     const content = `
       <html>
