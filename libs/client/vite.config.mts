@@ -1,3 +1,4 @@
+// @ts-ignore-next-line
 import packageConfig from './package.json' assert { type: 'json' };
 import path from 'path';
 import { defineConfig } from 'vite';

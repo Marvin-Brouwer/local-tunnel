@@ -124,6 +124,8 @@ async function startTunnel(_: never, command: Command, x, y, z){
         
         console.warn('Closing tunnel...')
         await tunnel.close();
+        // This is just in case the tunnel doesn't close properly.
+        process.exit();
     }
 }
 

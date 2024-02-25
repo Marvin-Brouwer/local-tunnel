@@ -39,10 +39,13 @@ tunnel.on('tunnel-close', () => {
 	console.info('Tunnel closed')
 });
 
-console.log(tunnel.url)
-console.log(tunnel.password)
+console.info(tunnel.url)
+console.info(tunnel.password)
 
 await tunnel.open();
-// TODO tunnel.selfValidate(), where it fils in the form for you?
+
+console.info('Tunnel connected');
 
 await tunnel.close();
+
+console.info('Tunnel closed');

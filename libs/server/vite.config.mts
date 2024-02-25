@@ -1,8 +1,9 @@
+// @ts-ignore-next-line
 import packageConfig from './package.json' assert { type: 'json' };
 import path from 'path';
 import { defineConfig } from 'vite';
 
-const entry = path.resolve(__dirname, 'index.ts');
+const entry = path.resolve(__dirname, 'src', 'index.ts');
 const packageNameDefinition = packageConfig.name.split('/');
 const packageName = packageNameDefinition[1];
 const outputDir = 'lib';

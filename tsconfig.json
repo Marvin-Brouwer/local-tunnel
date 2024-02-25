@@ -16,7 +16,7 @@
 		"lib": [
 		  "ESNext",
 		],
-        "types": ["node", "vite/client"],
+        "types": ["@types/node", "vite/client"],
 		"module": "ESNext",
 		"outDir": "./dist"
 	}

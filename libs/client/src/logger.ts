@@ -1,4 +1,6 @@
 import { type Debugger } from 'debug';
+import { type TunnelLease } from './tunnel/tunnel-lease';
+import { type TunnelConfig } from './client/client-config';
 
 type LoggerFactory = (namespace: string) => Pick<Debugger, 'enabled' |'log'>;
 let loggerFactory: LoggerFactory = () => ({
@@ -21,3 +23,10 @@ if (import.meta.env.VITE_DEBUG) {
 }
 
 export const createLogger = loggerFactory;
+
+export const format = {
+    remoteAddress: (tunnelLease: TunnelLease) => 
+      `https://${tunnelLease.remote.target}:${tunnelLease.remote.port}`,
+    localAddress: (tunnelConfig: TunnelConfig) => 
+      `${!!tunnelConfig.https ? 'https' : 'http'}://${tunnelConfig.hostName}:${tunnelConfig.port}`
+}

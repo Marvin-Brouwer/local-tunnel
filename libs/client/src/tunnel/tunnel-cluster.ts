@@ -12,12 +12,6 @@ import type { TunnelEventEmitter } from './tunnel-events';
 
 // TODO this file can do with splitting up
 const logger = createLogger('localtunnel:tunnel-cluster');
-const format = {
-  remoteAddress: (tunnelLease: TunnelLease) => 
-    `https://${tunnelLease.remote.target}:${tunnelLease.remote.port}`,
-  localAddress: (tunnelConfig: TunnelConfig) => 
-    `${!!tunnelConfig.https ? 'https' : 'http'}://${tunnelConfig.hostName}:${tunnelConfig.port}`
-}
 
 type DuplexConnectionError = Error & { code: string };
 
@@ -183,7 +177,7 @@ export class TunnelCluster {
     // and adjust for such instances to avoid beating on the door of the server
     this.#localSocket.once('error', (err: DuplexConnectionError) => {
       logger.log('local error %s', err.message);
-      this.#localSocket.end();
+      // this.#localSocket.end();
 
       this.#remoteSocket.removeListener('close', remoteClose);
 

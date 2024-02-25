@@ -1,6 +1,8 @@
+// @ts-ignore-next-line
 import packageConfig from './package.json' assert { type: 'json' };
 import path from 'path';
 import { defineConfig } from 'vite';
+import serveDummy from './plugins/dummy-server';
 
 const isDev = true; // process.argv.join(' ').includes('--mode development');
 const entry = path.resolve(__dirname, 'src/index.ts');
@@ -9,6 +11,11 @@ const packageName = packageNameDefinition[1];
 const outputDir = 'lib';
 
 export default defineConfig({
+	plugins:[
+		serveDummy({
+			port: 8080
+		}),
+	],
 	build: {
 		minify: !isDev,
 		target: ['ESNext'],
