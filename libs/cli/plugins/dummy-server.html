@@ -1,0 +1,42 @@
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <meta name="HandheldFriendly" content="true" />
+        <meta name="generator" content="dummy-server" />
+        <title>${urlPath}</title>
+        <link rel="canonical" href=${canonical} />
+        <base href=${canonical} />
+        <style>
+            code {
+                display: inline-block;
+                background: #efefef;
+                border-radius: 0.5em 0.5em 0.5em 0.5em;
+                padding: 0.1em 0.2em;
+                margin: 0;
+                user-select: text;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Response summary</h1>
+        <p>
+            Path: <code>${urlPath}</code> <br />
+            Status: <code>${statusCode}</code>
+        </p>
+        <h2>Test responses</h2>
+        <p>Connection errors</p>
+        <ul>
+            <li><a href="/ECONNREFUSED">ECONNREFUSED</a></li>
+            <li><a href="/ECONNRESET">ECONNRESET</a></li>
+        </ul>
+        <p>Response codes</p>
+        <ul>
+            <li><a href="/forbidden?statusCode=403">StatusCode: 403</a></li>
+            <li><a href="/not-found?statusCode=404">StatusCode: 404</a></li>
+            <li><a href="/server-error?statusCode=500">StatusCode: 500</a></li>
+            <li><a href="/some-arbitrary-path/?redirect=/redirected">Redirect</a></li>
+        </ul>
+    </body>
+</html>

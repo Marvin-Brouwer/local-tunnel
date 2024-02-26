@@ -38,7 +38,12 @@
     </head>
     <body onload="load()">
         <h1>Connection error</h1>
-        <p>Failed to connect to <span><code id="address">${address}</code></span>.</p>
-        <p>Please make sure the host is available, or check your firewall settings. </p>
+        <p>
+            Failed to connect to <code id="address">${address}</code>.<br/>
+            Please make sure the host is available, or check your firewall settings. 
+        </p>
+        <p>
+            ErrorCode: <code id="errorCode">${errorCode}</code>.
+        </p>
     </body>
 </html>

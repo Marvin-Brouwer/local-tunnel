@@ -1,5 +1,6 @@
-import { createServer, type RequestListener, type Server } from 'node:http'
-import { posix } from 'node:path'
+import { readFileSync } from 'node:fs'
+import { createServer, ServerResponse, type RequestListener, type Server } from 'node:http'
+import path, { posix } from 'node:path'
 import { type Plugin } from 'rollup'
 
 export type RollupServeOptions = {
@@ -24,58 +25,52 @@ let server: Server;
 function serveDummy (options: RollupServeOptions): Plugin {
 
   options.port = options.port
+  const htmlResponse = readFileSync(path.resolve(__dirname, './dummy-server.html'));
 
   const requestListener: RequestListener = (request, response) => {
 
-    // Remove querystring
-    const unsafePath = decodeURI(request.url.split('?')[0])
+    const urlParts = request.url.split('?');
+    const unsafePath = decodeURI(urlParts[0])
 
     // Don't allow path traversal
     const urlPath = posix.normalize(unsafePath);
-    console.log('request', urlPath);
+    const urlQuery = urlParts.length === 0 
+      ? new URLSearchParams()
+      : new URLSearchParams(urlParts[1]);
+
+    console.log('request', urlPath, urlQuery.toString());
 
     if (urlPath === '/ECONNREFUSED') {
       const fakeError = new Error('Faking connection refused');
       (fakeError as any).code = 'ECONNREFUSED';
-      response.destroy(fakeError);
+      return response.destroy(fakeError);
     }
     if (urlPath === '/ECONNRESET') {
       const fakeError = new Error('Faking connection reset');
       (fakeError as any).code = 'ECONNRESET';
-      response.destroy(fakeError);
+      return response.destroy(fakeError);
     }
 
     const canonical = 
-      request.headers['x-forwarded-host'] ??
+      request.headers['x-forwarded-host']?.toString() ??
       `//${request.headers.host ?? (`localhost:${options.port}`)}`; 
 
-    const content = `
-      <html>
-        <head>
-          <meta charset="utf-8" />
-          <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
-          <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-          <meta name="HandheldFriendly" content="true" />
-          <meta name="generator" content="dummy-server" />
-          <title>${urlPath}</title>
-          <link rel="canonical" href=${canonical} />
-          <base href=${canonical} />
-        </head>
-        <body>
-          <h1>Test response</h1>
-          <p>
-            Path: <br/>
-            <pre>${urlPath}</pre>
-          </p>
-          <p>
-            Test responses: <br />
-            <a href="./ECONNREFUSED">ECONNREFUSED</a> <br />
-            <a href="./ECONNRESET">ECONNRESET</a>
-          </p>
-        </body>
-      </html>
-    `;
-    return found(response, 'text/html', content);
+    let statusCode = !urlQuery.has('statusCode') 
+      ? 200
+      : parseInt(urlQuery.get('statusCode'), 10);
+
+    if (urlQuery.has('redirect')) {
+      statusCode = 307;
+      response.setHeader('Location', urlQuery.get('redirect'));
+    }
+
+    const content = htmlResponse
+      .toString()
+      .replaceAll('${urlPath}', urlPath)
+      .replaceAll('${canonical}', canonical)
+      .replaceAll('${statusCode}', statusCode.toString());
+
+    return found(response, statusCode, 'text/html', content);
   }
 
   // release previous server instance if rollup is reloading configuration in watch mode
@@ -110,8 +105,8 @@ function serveDummy (options: RollupServeOptions): Plugin {
   }
 }
 
-function found (response, mimeType, content) {
-  response.writeHead(200, { 'Content-Type': mimeType || 'text/plain' })
+function found (response: ServerResponse, statusCode: number, mimeType: string, content: string) {
+  response.writeHead(statusCode, { 'Content-Type': mimeType || 'text/plain' })
   response.end(content, 'utf-8')
 }
 

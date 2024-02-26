@@ -8,6 +8,8 @@ import { type TunnelConfig } from '../client/client-config';
 import htmlResponse from './fallback-connection.html?raw';
 import { posix } from "node:path";
 import { TunnelLease } from "./tunnel-lease";
+import { createLocalTunnel } from "../client/tunnel-client";
+import { createDownstreamConnection } from "./downstream-connection";
 
 const connectionLogger = createLogger('localtunnel:fallback:connection');
 const hostLogger = createLogger('localtunnel:fallback:host');
@@ -54,9 +56,13 @@ const createHost = (tunnelConfig: TunnelConfig, tunnelLease: TunnelLease, emitte
 		.replaceAll('${address}', format.localAddress(tunnelConfig));
 
 	const fallbackHost = createServer(async (request, response) => {
-		const unsafePath = decodeURI(request.url.split('?')[0])
-		const keepalive = request.url.split('?')[1] === 'keepalive'
+		const urlParts = request.url.split('?')
+		const unsafePath = decodeURI(urlParts[0])
+		const keepalive = urlParts.length !== 0 && urlParts[1] === 'keepalive'
 		const urlPath = posix.normalize(unsafePath);
+		const urlQuery = urlParts.length === 0
+			? ''
+			: urlParts[1];
 
 		if (request.method === 'OPTIONS' && keepalive) {
 			return response.end();
@@ -64,11 +70,12 @@ const createHost = (tunnelConfig: TunnelConfig, tunnelLease: TunnelLease, emitte
 
 		try {
 			const body = await getRequestBody(request);
-			await fetch(format.localAddress(tunnelConfig) + urlPath, { 
+			await fetch(`${format.localAddress(tunnelConfig)}${urlPath}?${urlQuery}`, { 
 				method: request.method,
 				mode: 'cors',
 				body,
 				referrer: request.headers.referer,
+				redirect: 'manual',
 				headers: {
 					...mapHeaders(request.rawHeaders),
 					'x-forwarded-host': tunnelLease.cachedTunnelUrl?.host ?? tunnelLease.tunnelUrl.host
@@ -77,6 +84,10 @@ const createHost = (tunnelConfig: TunnelConfig, tunnelLease: TunnelLease, emitte
 				.then(async fetchResponse => {
 					response.statusCode = fetchResponse.status;
 					response.statusMessage = fetchResponse.statusText;
+					response.writeHead(fetchResponse.status, { 
+						...Object.fromEntries(fetchResponse.headers.entries()),
+						'Content-Type': fetchResponse.headers.get('Content-Type') || 'text/plain' 
+					})
 					const data = await fetchResponse.arrayBuffer();
 					if (response.writableEnded) return;
 					await new Promise<void>((res,rej) => response.write(Buffer.from(data), e => {
@@ -85,23 +96,33 @@ const createHost = (tunnelConfig: TunnelConfig, tunnelLease: TunnelLease, emitte
 					}));
 					return response.end();
 				})
-				.catch(err => {
+				.catch(async err => {
 					connectionLogger.enabled
-						&& connectionLogger.log('unhandled error occurred while forwarding request %j', err)
-					response.write(unavailableResponse);
+						&& connectionLogger.log('unhandled error occurred while forwarding request %j', err);
+
+					response.write(unavailableResponse
+						.replaceAll('${errorCode}', err.cause.code)
+					);
 					return response.end();
 				})
 
 		} catch (unintendedError) {
 			connectionLogger.enabled
 				&& connectionLogger.log('unknown error occurred while forwarding request %j', unintendedError)
+
+			response.write(unavailableResponse
+				.replaceAll('${errorCode}', (unintendedError as Error).name)
+			);
+
 			response.write(unavailableResponse);
 			return response.end();
 		}
 
 		if (response.writableEnded) return;
 
-        response.write(unavailableResponse);
+		response.write(unavailableResponse
+			.replaceAll('${errorCode}',  'UNKNOWN')
+		);
         response.end();
     });
 

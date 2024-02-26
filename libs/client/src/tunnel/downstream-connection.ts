@@ -85,8 +85,12 @@ const createConnection = (tunnelConfig: TunnelConfig, emitter: TunnelEventEmitte
 	remoteSocket.on('error', (err: DuplexConnectionError) => {
 		logger.enabled && logger.log('socket error %j', err);
 
-		console.log(err)
+		reject(err)
 	});
-	
-	resolve(remoteSocket);
+	remoteSocket.on('connect', () => {
+		logger.enabled
+			&& logger.log('connection to %s UP', format.localAddress(tunnelConfig));
+
+		resolve(remoteSocket)
+	});
 });
