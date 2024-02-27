@@ -10,7 +10,7 @@ export type TunnelEventListener<T> =
     & PipeRequestHandler<T>
     & PipeErrorHandler<T>
 
-export type TunnelEventEmitter = EventEmitter & {
+export type TunnelEventEmitter = {
     on: TunnelEventListener<TunnelEventEmitter>,
     emit: 
         & TunnelOpenEmitter<TunnelEventEmitter> 

@@ -32,7 +32,8 @@ export const format = {
     },
     localAddress: (tunnelConfig: TunnelConfig) => 
       `${!!tunnelConfig.https ? 'https' : 'http'}://${tunnelConfig.hostName}:${tunnelConfig.port}`,
-    address: (addressInfo: AddressInfo) => {
+    address: (addressInfo: AddressInfo | string) => {
+        if (!isAddressInfo(addressInfo)) return addressInfo;
         if (addressInfo.family === 'IPv6') {
             if (addressInfo.address === '::') return `//localhost:${addressInfo.port}`;
             else return `//[${addressInfo.address}]:${addressInfo.port}`;
@@ -41,3 +42,7 @@ export const format = {
         else return `//${addressInfo.address}:${addressInfo.port}`;
     }
 }
+
+function isAddressInfo(addressInfo: AddressInfo | string): addressInfo is AddressInfo {
+    return addressInfo.constructor.name === 'AddressInfo'
+} 

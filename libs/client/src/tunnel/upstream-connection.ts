@@ -9,7 +9,7 @@ const logger = createLogger('localtunnel:upstream:connection');
 
 export const createUpstreamConnection = async (tunnelLease: TunnelLease, emitter: TunnelEventEmitter) => {
 
-	let connection = await createConnection(tunnelLease, emitter);
+	const connection = await createConnection(tunnelLease, emitter);
 
 	// This seems to be necessary to prevent the tunnel from closing, event though keepalive is set to true
 	const intervalHandle = setInterval(() => {
@@ -17,31 +17,10 @@ export const createUpstreamConnection = async (tunnelLease: TunnelLease, emitter
 			// don't care about any error.
 		})
 	}, 2000);
-
-	emitter.on('app-close', () => {
-		clearInterval(intervalHandle);
-		connection.removeAllListeners();
-		connection.end();
-		connection.destroy();
-	})
+	
 	connection.on('close', async () => {
-		console.log('upstream', 'close');
-	})
-	connection.on('drain', async () => {
-		console.log('upstream', 'drain');
-	})
-	connection.on('end', async () => {
-		console.log('upstream', 'end');
-	})
-	connection.on('disconnect', async () => {
-		console.log('upstream', 'disconnect');
-	})
-	connection.on('finish', async () => {
-		console.log('upstream', 'finish');
-	})
-	connection.on('error', async (e) => {
-		console.log('upstream', 'e', e);
-	})
+		clearInterval(intervalHandle);
+	});
 
 	return connection;
 };
@@ -60,7 +39,7 @@ const createConnection = (tunnelLease: TunnelLease, emitter: TunnelEventEmitter)
 		});
 
 	const initialConnectionError = (e: DuplexConnectionError) => {
-		emitter.emit('initial-connection-failed');
+		emitter.emit('upstream-error', e);
 		remoteSocket.destroy();
 		reject(e);
 	}

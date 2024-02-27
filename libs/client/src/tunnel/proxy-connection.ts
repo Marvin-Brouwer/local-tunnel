@@ -5,44 +5,18 @@ import { DuplexConnectionError } from "./errors";
 import { type TunnelEventEmitter } from './tunnel-events';
 import { createServer, IncomingMessage, type Server } from 'node:http'
 import { type TunnelConfig } from '../client/client-config';
-import htmlResponse from './fallback-connection.html?raw';
+import htmlResponse from './proxy-error-page.html?raw';
 import { posix } from "node:path";
 import { TunnelLease } from "./tunnel-lease";
-import { createLocalTunnel } from "../client/tunnel-client";
-import { createDownstreamConnection } from "./downstream-connection";
 
 const connectionLogger = createLogger('localtunnel:fallback:connection');
 const hostLogger = createLogger('localtunnel:fallback:host');
 
-export const createFallbackConnection = async (tunnelConfig: TunnelConfig, tunnelLease: TunnelLease, emitter: TunnelEventEmitter) => {
+export const createProxyConnection = async (tunnelConfig: TunnelConfig, tunnelLease: TunnelLease, emitter: TunnelEventEmitter) => {
 
-	let host = await createHost(tunnelConfig, tunnelLease, emitter);
+	const host = await createHost(tunnelConfig, tunnelLease, emitter);
     const address = (host.address() as AddressInfo);
-	let connection = await createConnection(address, emitter);
-
-	emitter.on('app-close', () => {
-		connection.removeAllListeners();
-		connection.end();
-		connection.destroy();
-	})
-	connection.on('close', async () => {
-		console.log('fallback', 'close');
-	})
-	connection.on('drain', async () => {
-		console.log('fallback', 'drain');
-	})
-	connection.on('end', async () => {
-		console.log('fallback', 'end');
-	})
-	connection.on('disconnect', async () => {
-		console.log('fallback', 'disconnect');
-	})
-	connection.on('finish', async () => {
-		console.log('fallback', 'finish');
-	})
-	connection.on('error', async (e) => {
-		console.log('fallback', 'e', e);
-	})
+	const connection = await createConnection(address, emitter);
 
 	return connection;
 };
@@ -50,7 +24,7 @@ export const createFallbackConnection = async (tunnelConfig: TunnelConfig, tunne
 const createHost = (tunnelConfig: TunnelConfig, tunnelLease: TunnelLease, emitter: TunnelEventEmitter) => new Promise<Server>((resolve, reject) => {
 
 	hostLogger.enabled
-		&& hostLogger.log('establishing fallback host');
+		&& hostLogger.log('establishing proxy host');
 
     const unavailableResponse = htmlResponse
 		.replaceAll('${address}', format.localAddress(tunnelConfig));
@@ -60,9 +34,9 @@ const createHost = (tunnelConfig: TunnelConfig, tunnelLease: TunnelLease, emitte
 		const unsafePath = decodeURI(urlParts[0])
 		const keepalive = urlParts.length !== 0 && urlParts[1] === 'keepalive'
 		const urlPath = posix.normalize(unsafePath);
-		const urlQuery = urlParts.length === 0
-			? ''
-			: urlParts[1];
+		const urlQuery = urlParts.length === 0 
+		  ? new URLSearchParams()
+		  : new URLSearchParams(urlParts[1]);
 
 		if (request.method === 'OPTIONS' && keepalive) {
 			return response.end();
@@ -96,12 +70,13 @@ const createHost = (tunnelConfig: TunnelConfig, tunnelLease: TunnelLease, emitte
 					}));
 					return response.end();
 				})
-				.catch(async err => {
+				.catch(async (err: SocketFailure) => {
 					connectionLogger.enabled
 						&& connectionLogger.log('unhandled error occurred while forwarding request %j', err);
 
 					response.write(unavailableResponse
 						.replaceAll('${errorCode}', err.cause.code)
+						.replaceAll('${errorDetails}', formatError(err))
 					);
 					return response.end();
 				})
@@ -112,6 +87,7 @@ const createHost = (tunnelConfig: TunnelConfig, tunnelLease: TunnelLease, emitte
 
 			response.write(unavailableResponse
 				.replaceAll('${errorCode}', (unintendedError as Error).name)
+				.replaceAll('${errorDetails}', formatError(unintendedError))
 			);
 
 			response.write(unavailableResponse);
@@ -122,6 +98,7 @@ const createHost = (tunnelConfig: TunnelConfig, tunnelLease: TunnelLease, emitte
 
 		response.write(unavailableResponse
 			.replaceAll('${errorCode}',  'UNKNOWN')
+			.replaceAll('${errorDetails}', '')
 		);
         response.end();
     });
@@ -194,4 +171,35 @@ const getRequestBody = async (request: IncomingMessage): Promise<string | undefi
 		console.log("Received body data:");
 		resolve(chunk.toString());
 	}));
+}
+
+type SocketError = Error & {
+	name: string,
+	socket?: any,
+	code?: string 
+	address?: string 
+	port?: string 
+}
+type SocketFailure = {
+	cause: SocketError
+}
+const formatError = (error: Error | SocketFailure) => {
+	if (!import.meta.env.DEV) {
+		(error as Error).stack = undefined!;
+		if (Object.hasOwn(error, 'cause')) {
+			(error as SocketFailure).cause.socket = undefined!;
+			(error as SocketFailure).cause.address = undefined!;
+			(error as SocketFailure).cause.port = undefined!;
+		}
+	}
+
+	if (Object.hasOwn(error, 'cause')) {
+		return JSON.stringify({
+			[(error as SocketFailure).cause.name]: error.cause
+		}, null, 2)
+	}
+
+	return JSON.stringify({
+		[(error as Error).name]: error
+	}, null, 2)
 }

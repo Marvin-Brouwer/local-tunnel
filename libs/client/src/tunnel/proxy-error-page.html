@@ -1,13 +1,25 @@
 <html>
     <head>
-        <title>Tunnel to ${format.localAddress(tunnelConfig)}</title>
+        <title>Tunnel to '${address}'</title>
+        <!-- TODO: perhaps change this to a JS post and have a backoff strategy? Or a max retries? -->
+        <meta http-equiv="Refresh" content="10" />
         <style>
-            code {
+            code, pre {
                 display: inline-block;
                 background: #efefef;
                 border-radius: 0.5em 0.5em 0.5em 0.5em;
                 padding: 0.1em 0.2em;
                 user-select: text;
+            }
+
+            pre#errorDetails {
+                margin: 1ex;
+                padding: .5ex;
+                border: 1px solid silver;
+                display: flex;
+            }
+            pre#errorDetails > code {
+                display: flex;
             }
         </style>
         <script>
@@ -44,6 +56,9 @@
         </p>
         <p>
             ErrorCode: <code id="errorCode">${errorCode}</code>.
+        </p>
+        <p>
+            <pre id="errorDetails"><code>${errorDetails}</code></pre>
         </p>
     </body>
 </html>

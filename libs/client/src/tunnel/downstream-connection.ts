@@ -10,33 +10,13 @@ import tls from 'node:tls';
 
 const logger = createLogger('localtunnel:downstream:connection');
 
+/**
+ * Even though this connection is currently not in use, in favor of the fetch() in the proxy connection
+ * We might need this for the websocket setup.
+ */
 export const createDownstreamConnection = async (tunnelConfig: TunnelConfig, emitter: TunnelEventEmitter) => {
 
-	let connection = await createConnection(tunnelConfig, emitter);
-
-	emitter.on('app-close', () => {
-		connection.removeAllListeners();
-		connection.end();
-		connection.destroy();
-	})
-	connection.on('close', async () => {
-		console.log('downstream', 'close');
-	})
-	connection.on('drain', async () => {
-		console.log('downstream', 'drain');
-	})
-	connection.on('end', async () => {
-		console.log('downstream', 'end');
-	})
-	connection.on('disconnect', async () => {
-		console.log('downstream', 'disconnect');
-	})
-	connection.on('finish', async () => {
-		console.log('downstream', 'finish');
-	})
-	connection.on('error', async (e) => {
-		console.log('downstream', 'e', e);
-	})
+	const connection = await createConnection(tunnelConfig, emitter);
 
 	return connection;
 };
