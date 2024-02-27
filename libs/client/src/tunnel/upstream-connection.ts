@@ -1,9 +1,10 @@
 import { createLogger, format } from "../logger";
 import { Duplex } from "node:stream";
 import net from 'node:net';
-import { DuplexConnectionError } from "./errors";
-import { type TunnelEventEmitter } from './tunnel-events';
+import { SocketError, isRejectedCode } from "../errors/socket-error";
+import { type TunnelEventEmitter } from '../errors/tunnel-events';
 import { type TunnelLease } from "./tunnel-lease";
+import { UnknownUpstreamTunnelError, UpstreamTunnelError, UpstreamTunnelRejectedError } from "../errors/upstream-tunnel-errors";
 
 const logger = createLogger('localtunnel:upstream:connection');
 
@@ -38,10 +39,20 @@ const createConnection = (tunnelLease: TunnelLease, emitter: TunnelEventEmitter)
 			keepAlive: true
 		});
 
-	const initialConnectionError = (e: DuplexConnectionError) => {
-		emitter.emit('upstream-error', e);
+	const mapError = (error: SocketError) => {
+		if (isRejectedCode(error)) {
+			return  new UpstreamTunnelRejectedError(tunnelLease, error);
+		}
+
+		return new UnknownUpstreamTunnelError(tunnelLease, error);
+	}
+
+	const initialConnectionError = (error: SocketError) => {
+		const upstreamError = mapError(error);
+		emitter.emit('upstream-error', upstreamError);
 		remoteSocket.destroy();
-		reject(e);
+		// TODO see if reject is necessary, since the handler should close or reconnect
+		reject(upstreamError);
 	}
 
 	remoteSocket.once('error', initialConnectionError);
@@ -53,11 +64,10 @@ const createConnection = (tunnelLease: TunnelLease, emitter: TunnelEventEmitter)
 		logger.enabled
 			&& logger.log('connection to %s UP', format.remoteAddress(tunnelLease));
 
-		// TODO emit specific errors
-		remoteSocket.on('error', (err: DuplexConnectionError) => {
-			// This is handled in the tunnel-client
-			if (err.code === 'ECONNRESET') return;
-			logger.enabled && logger.log('socket error %j', err);
+		remoteSocket.on('error', (error: SocketError) => {
+			logger.enabled && logger.log('socket error %j', error);
+			const upstreamError = mapError(error);
+			emitter.emit('upstream-error', upstreamError);
 		});
 
 		resolve(remoteSocket);

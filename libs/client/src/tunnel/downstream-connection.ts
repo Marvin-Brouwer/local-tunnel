@@ -1,11 +1,12 @@
 import { createLogger, format } from "../logger";
 import { Duplex } from "node:stream";
 import net from 'node:net';
-import { DuplexConnectionError } from "./errors";
-import { type TunnelEventEmitter } from './tunnel-events';
+import { SocketError, isRejectedCode } from "../errors/socket-error";
+import { type TunnelEventEmitter } from '../errors/tunnel-events';
 import { type TunnelConfig } from "../client/client-config";
 import fs from 'node:fs';
 import tls from 'node:tls';
+import { DownstreamTunnelRejectedError, UnknownDownstreamTunnelError } from "../errors/downstream-tunnel-errors";
 
 
 const logger = createLogger('localtunnel:downstream:connection');
@@ -61,12 +62,20 @@ const createConnection = (tunnelConfig: TunnelConfig, emitter: TunnelEventEmitte
 			.setKeepAlive(true)
 	})();
 
-	// TODO specific errors
-	remoteSocket.on('error', (err: DuplexConnectionError) => {
-		logger.enabled && logger.log('socket error %j', err);
+	const mapError = (error: SocketError) => {
+		if (isRejectedCode(error)) {
+			return  new DownstreamTunnelRejectedError(tunnelConfig, error);
+		}
 
-		reject(err)
+		return new UnknownDownstreamTunnelError(tunnelConfig, error);
+	}
+
+	remoteSocket.on('error', (error: SocketError) => {
+		logger.enabled && logger.log('socket error %j', error);
+
+		reject(mapError(error))
 	});
+
 	remoteSocket.on('connect', () => {
 		logger.enabled
 			&& logger.log('connection to %s UP', format.localAddress(tunnelConfig));

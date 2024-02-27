@@ -1,16 +1,18 @@
 import { createLogger, format } from "../logger";
 import { Duplex } from "node:stream";
-import net, { AddressInfo } from 'node:net';
-import { DuplexConnectionError } from "./errors";
-import { type TunnelEventEmitter } from './tunnel-events';
-import { createServer, IncomingMessage, type Server } from 'node:http'
+import net, { type AddressInfo } from 'node:net';
+import { isDestroyedSocketError, type SocketError, isSocketError, isRejectedCode } from '../errors/socket-error';
+import { type TunnelEventEmitter } from '../errors/tunnel-events';
+import { createServer, type IncomingMessage, type Server } from 'node:http'
 import { type TunnelConfig } from '../client/client-config';
 import htmlResponse from './proxy-error-page.html?raw';
 import { posix } from "node:path";
-import { TunnelLease } from "./tunnel-lease";
+import { type TunnelLease } from "./tunnel-lease";
+import { DownstreamTunnelRejectedError, UnknownDownstreamTunnelError } from "../errors/downstream-tunnel-errors";
+import { ProxyTunnelRejectedError, UnknownProxyTunnelError } from "../errors/proxy-tunnel-error";
 
-const connectionLogger = createLogger('localtunnel:fallback:connection');
-const hostLogger = createLogger('localtunnel:fallback:host');
+const connectionLogger = createLogger('localtunnel:proxy:connection');
+const hostLogger = createLogger('localtunnel:proxy:host');
 
 export const createProxyConnection = async (tunnelConfig: TunnelConfig, tunnelLease: TunnelLease, emitter: TunnelEventEmitter) => {
 
@@ -70,24 +72,35 @@ const createHost = (tunnelConfig: TunnelConfig, tunnelLease: TunnelLease, emitte
 					}));
 					return response.end();
 				})
-				.catch(async (err: SocketFailure) => {
+				.catch(async (failureOrError: SocketFailure | Error) => {
+
+					if (!isSocketFailure(failureOrError)) throw failureOrError;
+					const socketError = failureOrError.cause;
+
+					const connectionError = isRejectedCode(socketError)
+						? new DownstreamTunnelRejectedError(tunnelConfig, socketError)
+						: new UnknownDownstreamTunnelError(tunnelConfig, socketError)
+
 					connectionLogger.enabled
-						&& connectionLogger.log('unhandled error occurred while forwarding request %j', err);
+						&& connectionLogger.log('unhandled error occurred while forwarding request %o', connectionError);
 
 					response.write(unavailableResponse
-						.replaceAll('${errorCode}', err.cause.code)
-						.replaceAll('${errorDetails}', formatError(err))
+						.replaceAll('${errorCode}', connectionError.reason)
+						.replaceAll('${errorDetails}', formatError(connectionError))
 					);
 					return response.end();
 				})
 
-		} catch (unintendedError) {
+		} catch (error) {
+
+			const unknownError = new UnknownDownstreamTunnelError(tunnelConfig, error);
+
 			connectionLogger.enabled
-				&& connectionLogger.log('unknown error occurred while forwarding request %j', unintendedError)
+				&& connectionLogger.log('unknown error occurred while forwarding request %j', unknownError)
 
 			response.write(unavailableResponse
-				.replaceAll('${errorCode}', (unintendedError as Error).name)
-				.replaceAll('${errorDetails}', formatError(unintendedError))
+				.replaceAll('${errorCode}', unknownError.reason)
+				.replaceAll('${errorDetails}', formatError(unknownError))
 			);
 
 			response.write(unavailableResponse);
@@ -116,7 +129,7 @@ const createConnection = (address: AddressInfo, emitter: TunnelEventEmitter) => 
 	connectionLogger.enabled
 		&& connectionLogger.log('establishing remote connection to http:%s', format.address(address));
 
-	const remoteSocket: Duplex = net
+	const proxySocket: Duplex = net
 		.createConnection({
 			host: address.address,
 			port: address.port,
@@ -124,27 +137,38 @@ const createConnection = (address: AddressInfo, emitter: TunnelEventEmitter) => 
 			keepAlive: true
 		});
 
-	// TODO specific errors
-	remoteSocket.on('error', (err: DuplexConnectionError) => {
-		connectionLogger.enabled && connectionLogger.log('socket error %j', err);
-
-		// emit connection refused errors immediately, because they
-		// indicate that the tunnel can't be established.
-		if (err.code === 'ECONNREFUSED') {
-			reject(new Error(
-				`connection refused: http:${format.address(address)} (check your firewall settings)`
-			));
-			return;
+	const mapError = (error: SocketError) => {
+		if (isRejectedCode(error)) {
+			return  new ProxyTunnelRejectedError(address, error);
 		}
 
-		console.log(err)
-	});
+		return new UnknownProxyTunnelError(address, error);
+	}
+	
+	const initialConnectionError = (error: SocketError) => {
+		const proxyError = mapError(error);
+		emitter.emit('proxy-error', proxyError);
+		proxySocket.destroy();
+		
+		reject(proxyError);
+	}
 
-	remoteSocket.once('connect', () => {
+	proxySocket.once('error', initialConnectionError);
+	proxySocket.once('connect', () => {
+		proxySocket.once('data', () => 
+			proxySocket.off('error', initialConnectionError)
+		);
+
 		connectionLogger.enabled
 			&& connectionLogger.log('connection to fallback http:%s UP', format.address(address));
 
-		resolve(remoteSocket);
+		proxySocket.on('error', (error: SocketError) => {
+			connectionLogger.enabled && connectionLogger.log('socket error %j', error);
+			const proxyError = mapError(error);
+			emitter.emit('proxy-error', proxyError);
+		});
+
+		resolve(proxySocket);
 	});
 });
 
@@ -173,33 +197,15 @@ const getRequestBody = async (request: IncomingMessage): Promise<string | undefi
 	}));
 }
 
-type SocketError = Error & {
-	name: string,
-	socket?: any,
-	code?: string 
-	address?: string 
-	port?: string 
-}
 type SocketFailure = {
 	cause: SocketError
 }
-const formatError = (error: Error | SocketFailure) => {
-	if (!import.meta.env.DEV) {
-		(error as Error).stack = undefined!;
-		if (Object.hasOwn(error, 'cause')) {
-			(error as SocketFailure).cause.socket = undefined!;
-			(error as SocketFailure).cause.address = undefined!;
-			(error as SocketFailure).cause.port = undefined!;
-		}
-	}
+const isSocketFailure = (error: Error | SocketFailure): error is SocketFailure =>  
+	Object.hasOwn(error, 'cause')
 
-	if (Object.hasOwn(error, 'cause')) {
-		return JSON.stringify({
-			[(error as SocketFailure).cause.name]: error.cause
-		}, null, 2)
-	}
 
+const formatError = (error: Error | SocketError) => {
 	return JSON.stringify({
 		[(error as Error).name]: error
-	}, null, 2)
+	}, null, 2).replaceAll('\\n', ' ')
 }

@@ -3,10 +3,10 @@ import '../tunnel/transforms/header-host-transform';
 import { type Duplex, EventEmitter } from 'node:stream';
 import { applyConfig, type TunnelConfig, type ClientConfig } from './client-config';
 import { getTunnelLease, type TunnelLease } from '../tunnel/tunnel-lease';
-import { TunnelEventEmitter, TunnelEventListener } from '../tunnel/tunnel-events';
+import { type TunnelEventEmitter, type TunnelEventListener } from '../errors/tunnel-events';
 import { createUpstreamConnection } from '../tunnel/upstream-connection';
 import { createProxyConnection } from '../tunnel/proxy-connection';
-import { type DuplexConnectionError } from '../tunnel/errors';
+import { type SocketError } from '../errors/socket-error';
 
 export const createLocalTunnel = async (config: ClientConfig): Promise<TunnelClient> => {
 
@@ -21,11 +21,11 @@ export const createLocalTunnel = async (config: ClientConfig): Promise<TunnelCli
 
 export class TunnelClient {
 
-    #emitter: TunnelEventEmitter;
+    #emitter: EventEmitter & TunnelEventEmitter;
     #upstream: Duplex;
     #fallback: Duplex;
 
-    #status: 'open' | 'closed' | 'reconnecting' | 'connecting'
+    #status: 'open' | 'closed' | 'connecting'
 
     public get status() {
         return this.#status
@@ -45,11 +45,11 @@ export class TunnelClient {
         readonly tunnelConfig: TunnelConfig,
         readonly tunnelLease: TunnelLease
     ) {
-        this.#emitter = new EventEmitter({ captureRejections: true }) as TunnelEventEmitter;
+        this.#emitter = new EventEmitter({ captureRejections: true }) as EventEmitter & TunnelEventEmitter;
     }
 
     public async open(): Promise<this> {
-        if (this.status === 'connecting' || this.status === 'reconnecting') {
+        if (this.status === 'connecting') {
             console.warn('Tunnel was already connecting, noop.');
             return this;
         }
@@ -68,19 +68,23 @@ export class TunnelClient {
         this.#upstream
             .transformHeaderHost(this.tunnelConfig)
             .pipe(this.#fallback)
-            .pipe(this.#upstream);
+            .pipe(this.#upstream)
+            .on('close', () => {
+                if(this.#status !== 'closed' && !this.#upstream.destroyed)
+                    this.#emitter.emit('tunnel-close');
+            });
 
         this.#fallback
             .resume();
         
         this.#status = 'open';
+		this.#emitter.emit('tunnel-open');
 
-        this.#upstream.on('error', async (err: DuplexConnectionError) => {
-            // If the upstream server get's closed
+        // TODO move to CLI
+        this.#upstream.on('error', async (err: SocketError) => {
+            // If the upstream server get's closed, we close everything
             if (err.code === 'ECONNRESET') {
-                this.#emitter.emit('upstream-error', err);
                 await this.close();
-                this.#emitter.emit('tunnel-dead');
                 return;
             }
         })
@@ -101,6 +105,9 @@ export class TunnelClient {
             new Promise(r => this.#fallback.end(r)),
             new Promise(r => this.#upstream.end(r))
         ])
+        if (!this.#upstream.destroyed)
+		    this.#emitter.emit('tunnel-closed');
+
         this.#fallback.destroy();
         this.#upstream.destroy();
 
