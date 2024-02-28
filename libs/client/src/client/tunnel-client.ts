@@ -6,12 +6,14 @@ import { getTunnelLease, type TunnelLease } from '../tunnel/tunnel-lease';
 import { type TunnelEventEmitter, type TunnelEventListener } from '../errors/tunnel-events';
 import { createUpstreamConnection } from '../tunnel/upstream-connection';
 import { createProxyConnection } from '../tunnel/proxy-connection';
-import { type SocketError } from '../errors/socket-error';
+import { format } from '../logger';
+import { LeaseRejectedError } from '../errors/upstream-tunnel-errors';
 
 export const createLocalTunnel = async (config: ClientConfig): Promise<TunnelClient> => {
 
     const tunnelConfig = applyConfig(config);
-    const tunnelLease = await getTunnelLease(tunnelConfig);
+    const tunnelLease = await getTunnelLease(tunnelConfig)
+        .catch((err) => { throw new LeaseRejectedError(tunnelConfig, err); });
 
     return new TunnelClient(
         tunnelConfig,
@@ -25,7 +27,7 @@ export class TunnelClient {
     #upstream: Duplex;
     #fallback: Duplex;
 
-    #status: 'open' | 'closed' | 'connecting'
+    #status: 'open' | 'closed' | 'connecting' | 'closing' 
 
     public get status() {
         return this.#status
@@ -33,9 +35,11 @@ export class TunnelClient {
     public get url() {
         return this.tunnelLease.tunnelUrl
     }
-    public get requestedUrl() {
-        const schema = import.meta.env.VITE_SERVER_SCHEMA ?? 'https';
-        return `${schema}://${this.tunnelConfig.server.subdomain ?? '[random]'}.${this.tunnelConfig.server.hostName}`
+    public get cachedUrl() {
+        return this.tunnelLease.cachedTunnelUrl
+    }
+    public get localAddress() {
+        return format.localAddress(this.tunnelConfig);
     }
     public get password() {
         return this.tunnelLease.client.publicIp
@@ -67,6 +71,11 @@ export class TunnelClient {
         this.#upstream = await createUpstreamConnection(this.tunnelLease, this.#emitter);
         this.#upstream
             .transformHeaderHost(this.tunnelConfig)
+            .on('data', (chunk: Buffer) => {
+                const httpLeader = chunk.toString().split(/(\r\n|\r|\n)/)[0]
+                const [method, path] = httpLeader.split(' ');
+                this.#emitter.emit('pipe-request', method, path)
+            })
             .pipe(this.#fallback)
             .pipe(this.#upstream)
             .on('close', () => {
@@ -80,26 +89,16 @@ export class TunnelClient {
         this.#status = 'open';
 		this.#emitter.emit('tunnel-open');
 
-        // TODO move to CLI
-        this.#upstream.on('error', async (err: SocketError) => {
-            // If the upstream server get's closed, we close everything
-            if (err.code === 'ECONNRESET') {
-                await this.close();
-                return;
-            }
-        })
-
-
         return this;
     }
 
     public async close(): Promise<this> {
-        if (this.status === 'closed') {
+        if (this.status === 'closed' || this.status === 'closing') {
             console.warn('Tunnel was already closed, noop.');
             return this;
         }
         
-        this.#status = 'closed';
+        this.#status = 'closing';
 
         await Promise.all([
             new Promise(r => this.#fallback.end(r)),
@@ -110,6 +109,8 @@ export class TunnelClient {
 
         this.#fallback.destroy();
         this.#upstream.destroy();
+        
+        this.#status = 'closed';
 
         return this;
     }

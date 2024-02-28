@@ -38,7 +38,7 @@ export class ProxyTunnelRejectedError extends LocalTunnelError {
         
         this.socketError = cleanSocketError(socketError);
         this.message = 
-            `The Proxy tunnel ${format.address(address)} rejected the connection.` + '\n' +
+            `The proxy tunnel ${format.address(address)} rejected the connection.` + '\n' +
             `Check your firewall for outbound rules to the tunnel or inbound rules for port ${address.port}`;
     }
 }

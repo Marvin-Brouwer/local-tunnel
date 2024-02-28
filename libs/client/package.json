@@ -17,8 +17,8 @@
       "node": "./dist/index.js"
     }
   },
-  "typings": "./dist/index.d.ts",
-  "types": "./dist/index.d.ts",
+  "typings": "./dist/types/index.d.ts",
+  "types": "./dist/types/index.d.ts",
   "scripts": {
     "watch": "pnpm build --mode development --watch",
     "build": "vite build",

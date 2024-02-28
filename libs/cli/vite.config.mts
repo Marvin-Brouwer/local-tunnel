@@ -26,6 +26,7 @@ export default defineConfig({
         rollupOptions: {
 			external: [
 				'@local-tunnel/client',
+				'chalk',
 				/^node\:/
 			],
             treeshake: true,

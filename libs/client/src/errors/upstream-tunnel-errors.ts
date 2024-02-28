@@ -1,7 +1,8 @@
+import { TunnelConfig } from "../client/client-config";
 import { format } from "../logger";
 import { type TunnelLease } from "../tunnel/tunnel-lease";
 import { LocalTunnelError } from "./local-tunnel-error";
-import { cleanSocketError, type SocketError } from "./socket-error";
+import { cleanSocketError, type SocketError, type DestroyedSocketError } from "./socket-error";
 
 /**
  * Base error indicating something failed in the connection to the `upstream` tunnel connection.  
@@ -14,7 +15,6 @@ export abstract class UpstreamTunnelError extends LocalTunnelError {
 
     public abstract readonly reason: string
 } 
-
 
 /**
  * Error indicating the `upstream` tunnel rejected connection.   
@@ -38,6 +38,30 @@ export class UpstreamTunnelRejectedError extends LocalTunnelError {
         this.message = 
             `The upstream tunnel ${format.remoteAddress(tunnelLease)} rejected the connection.` + '\n' +
             `Check your firewall for outbound rules to the tunnel or inbound rules for port ${tunnelLease.remote.port}`;
+    }
+}
+/**
+ * Error indicating the `upstream` tunnel rejected the lease request.   
+ *   
+ * This is most likely due to the upstream server restarting or network errors.  
+ * If this is not the case, you should check your firewall settings.
+ */
+export class LeaseRejectedError extends LocalTunnelError {
+    public static isLeaseRejectedError(error: Error): error is LeaseRejectedError {
+        return error.constructor.name == LeaseRejectedError.name;
+    }
+
+    public get reason() {
+        return (this.error.cause as DestroyedSocketError | undefined)?.code ?? 'UNKNOWN';
+    }
+    
+    constructor(tunnelConfig: TunnelConfig, private readonly error: Error) {
+        super();
+        
+        this.error = cleanSocketError(error);
+        this.message = 
+            `The upstream tunnel ${format.remoteOrigin(tunnelConfig)} rejected the lease request.` + '\n' +
+            `Check your firewall for outbound rules to the tunnel`;
     }
 }
 

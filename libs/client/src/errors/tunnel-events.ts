@@ -11,6 +11,7 @@ export type TunnelEventListener<T> =
     & UpstreamErrorHandler<T>
     & ProxyErrorHandler<T>
     & DownstreamErrorHandler<T>
+    & TunnelRequestHandler<T>
 
 /**
  * Event emitter options for the `@local-tunnel/client`
@@ -23,6 +24,7 @@ export type TunnelEventEmitter = {
         & UpstreamErrorEmitter<TunnelEventEmitter>
         & ProxyErrorEmitter<TunnelEventEmitter>
         & DownstreamErrorEmitter<TunnelEventEmitter>
+        & TunnelRequestEmitter<TunnelEventEmitter>
 }
 
 
@@ -39,3 +41,6 @@ type TunnelOpenEmitter<T> = (eventName: 'tunnel-open') => T
 type TunnelOpenHandler<T> = (eventName: 'tunnel-open', listener: () => void) => T
 type TunnelCloseEmitter<T> = (eventName: 'tunnel-close') => T
 type TunnelCloseHandler<T> = (eventName: 'tunnel-close', listener: () => void) => T
+
+type TunnelRequestEmitter<T> = (eventName: 'pipe-request', method: string, path: string) => T
+type TunnelRequestHandler<T> = (eventName: 'pipe-request', listener: (method: string, path: string) => void) => T

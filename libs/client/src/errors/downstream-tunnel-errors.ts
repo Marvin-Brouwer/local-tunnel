@@ -35,8 +35,8 @@ export class DownstreamTunnelRejectedError extends LocalTunnelError {
         
         this.socketError = cleanSocketError(socketError);
         this.message = 
-            `The Downstream tunnel ${format.localAddress(tunnelConfig)} rejected the connection.` + '\n' +
-            `Check whether the service is running and/or your firewall for inbound rules to port ${tunnelConfig.port}`;
+            `The downstream tunnel ${format.localAddress(tunnelConfig)} rejected the connection.` + '\n' +
+            `Check whether the service is running and/or check your firewall for inbound rules to port ${tunnelConfig.port}`;
     }
 }
 

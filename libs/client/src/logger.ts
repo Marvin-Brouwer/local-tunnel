@@ -30,6 +30,10 @@ export const format = {
         const schema = import.meta.env.VITE_SERVER_SCHEMA ?? 'https';
         return `${schema}://${tunnelLease.remote.target}:${tunnelLease.remote.port}`
     },
+    remoteOrigin: (tunnelConfig: TunnelConfig) => {
+        const schema = import.meta.env.VITE_SERVER_SCHEMA ?? 'https';
+        return `${schema}://${tunnelConfig.server.hostName}`
+    },
     localAddress: (tunnelConfig: TunnelConfig) => 
       `${!!tunnelConfig.https ? 'https' : 'http'}://${tunnelConfig.hostName}:${tunnelConfig.port}`,
     address: (addressInfo: AddressInfo | string) => {

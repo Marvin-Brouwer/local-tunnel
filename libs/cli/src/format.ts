@@ -1,0 +1,12 @@
+export default async () => {
+
+    // The direct import of chalk didn't work, so we make due
+    const { default: chalk } = await import('chalk');
+
+    return {
+        link: (url: URL | string) => chalk.underline.blueBright(url.toString()),
+        error: (error: Error) => `${chalk.bold.red(error.name)}:\n  ${chalk.italic(`"${error.message}"`)}`,
+        timestamp: (dateTime: Date) => chalk.green(dateTime.toISOString()),
+        password: (password: string) => chalk.italic.yellow.bold.italic(`'${password}'`)
+    }
+}

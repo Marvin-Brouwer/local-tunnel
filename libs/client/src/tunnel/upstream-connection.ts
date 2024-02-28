@@ -4,7 +4,7 @@ import net from 'node:net';
 import { SocketError, isRejectedCode } from "../errors/socket-error";
 import { type TunnelEventEmitter } from '../errors/tunnel-events';
 import { type TunnelLease } from "./tunnel-lease";
-import { UnknownUpstreamTunnelError, UpstreamTunnelError, UpstreamTunnelRejectedError } from "../errors/upstream-tunnel-errors";
+import { UnknownUpstreamTunnelError, UpstreamTunnelRejectedError } from "../errors/upstream-tunnel-errors";
 
 const logger = createLogger('localtunnel:upstream:connection');
 
@@ -27,7 +27,7 @@ export const createUpstreamConnection = async (tunnelLease: TunnelLease, emitter
 };
 
 
-const createConnection = (tunnelLease: TunnelLease, emitter: TunnelEventEmitter) => new Promise<Duplex>((resolve, reject) => {
+const createConnection = (tunnelLease: TunnelLease, emitter: TunnelEventEmitter) => new Promise<Duplex>((resolve) => {
 	logger.enabled
 		&& logger.log('establishing remote connection to %s', format.remoteAddress(tunnelLease));
 
@@ -51,8 +51,9 @@ const createConnection = (tunnelLease: TunnelLease, emitter: TunnelEventEmitter)
 		const upstreamError = mapError(error);
 		emitter.emit('upstream-error', upstreamError);
 		remoteSocket.destroy();
-		// TODO see if reject is necessary, since the handler should close or reconnect
-		reject(upstreamError);
+
+		// We don't need to reject here, errors are handled by the implementer.
+		resolve(remoteSocket);
 	}
 
 	remoteSocket.once('error', initialConnectionError);

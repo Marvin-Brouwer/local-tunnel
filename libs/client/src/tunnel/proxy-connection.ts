@@ -84,6 +84,7 @@ const createHost = (tunnelConfig: TunnelConfig, tunnelLease: TunnelLease, emitte
 					connectionLogger.enabled
 						&& connectionLogger.log('unhandled error occurred while forwarding request %o', connectionError);
 
+					emitter.emit('downstream-error', connectionError);
 					response.write(unavailableResponse
 						.replaceAll('${errorCode}', connectionError.reason)
 						.replaceAll('${errorDetails}', formatError(connectionError))
@@ -98,6 +99,7 @@ const createHost = (tunnelConfig: TunnelConfig, tunnelLease: TunnelLease, emitte
 			connectionLogger.enabled
 				&& connectionLogger.log('unknown error occurred while forwarding request %j', unknownError)
 
+			emitter.emit('downstream-error', unknownError);
 			response.write(unavailableResponse
 				.replaceAll('${errorCode}', unknownError.reason)
 				.replaceAll('${errorDetails}', formatError(unknownError))
@@ -109,6 +111,7 @@ const createHost = (tunnelConfig: TunnelConfig, tunnelLease: TunnelLease, emitte
 
 		if (response.writableEnded) return;
 
+		// This code should be unreachable
 		response.write(unavailableResponse
 			.replaceAll('${errorCode}',  'UNKNOWN')
 			.replaceAll('${errorDetails}', '')
@@ -150,7 +153,8 @@ const createConnection = (address: AddressInfo, emitter: TunnelEventEmitter) => 
 		emitter.emit('proxy-error', proxyError);
 		proxySocket.destroy();
 		
-		reject(proxyError);
+		// We don't need to reject here, errors are handled by the implementer.
+		resolve(proxySocket);
 	}
 
 	proxySocket.once('error', initialConnectionError);

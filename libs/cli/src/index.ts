@@ -42,10 +42,10 @@ function validatePathExist(value: string) {
     return value;
 }
 
-async function startTunnel(_: never, command: Command, x, y, z){
+async function startTunnel(_: never, command: Command){
 
     const port = command.optsWithGlobals().localPort as number;
-    const host = command.optsWithGlobals().localHost as string;
+    const hostName = command.optsWithGlobals().localHost as string;
     const remoteHost = command.optsWithGlobals().remoteHost as string;
     const subdomain = command.optsWithGlobals().subdomain as string | undefined;
     const localCert = command.optsWithGlobals().localCert as string | undefined;
@@ -55,6 +55,9 @@ async function startTunnel(_: never, command: Command, x, y, z){
     const skipCertificateValidation = command.optsWithGlobals().skipCertVal as boolean;
     const printRequestInfo = command.optsWithGlobals().printRequests as boolean;
     const openUrlOnConnect = command.optsWithGlobals().openUrl as boolean;
+
+    
+    const { error, link, timestamp, password } = await import('./format').then(x => x.default());
 
     const cert = (localCert === undefined || localKey === undefined)
         ? undefined
@@ -71,32 +74,43 @@ async function startTunnel(_: never, command: Command, x, y, z){
         };
     const tunnel = await createLocalTunnel({
         port,
-        host,
+        hostName,
         server: {
             hostName: remoteHost,
             subdomain
         },
         https
+    }).catch(err => {
+        console.error(error(err))
+        console.error();
+        process.exit(-1);
     })
     
     if (printRequestInfo) {
         tunnel.on('pipe-request', (method, path) => {
-            console.info(new Date().toString(), method, path)
+            if (method === 'OPTIONS' && path === '/?keepalive') return;
+
+            const utcDate = new Date(Date.now());
+            console.info(timestamp(utcDate), method, path)
         })
     }
 
-    tunnel.on('pipe-error', (err) => {
-        console.error('ERROR', err)
+    tunnel.on('upstream-error', (err) => {
+        console.error(error(err))
+        console.error();
+        close(-2);
     })
-    tunnel.on('tunnel-error', (err) => {
-        console.error('ERROR', err)
+    tunnel.on('proxy-error', (err) => {
+        console.error(error(err))
+        console.error();
+        close(-3);
     })
-    tunnel.on('tunnel-dead', () => {
-        process.exit(-1);
+    tunnel.on('downstream-error', (err) => {
+        console.error(error(err))
     })
 
-    console.info(`tunneling ${https ? 'https' : 'http'}://${host}:${port} <> ${tunnel.requestedUrl}`);
-    if (tunnel.password) console.info(`password: ${tunnel.password}`);
+    console.info(`tunneling ${link(tunnel.localAddress)} <> ${link(tunnel.url)}`);
+    if (tunnel.password) console.info(`password: ${password(tunnel.password)}`);
 
     /**
      * `cachedUrl` is set when using a proxy server that support resource caching.
@@ -104,18 +118,20 @@ async function startTunnel(_: never, command: Command, x, y, z){
      * @see https://github.com/localtunnel/localtunnel/pull/319#discussion_r319846289
      */
     if (tunnel.cachedUrl) {
-      console.info('cachedUrl', tunnel.cachedUrl);
+      console.info('cachedUrl:', link(tunnel.cachedUrl));
     }
     
     await tunnel.open();
+    console.info();
     
     if (openUrlOnConnect) {
-        console.info(`Opening ${tunnel.url} in default browser...`);
-        openUrl(tunnel.url);
+        console.info(`Opening ${link(tunnel.url)} in default browser...`);
+        openUrl(tunnel.url.toString());
+        console.info();
     }
-    
 
     console.info('SIGTERM or close the cli to close the socket.')
+    console.info();
     process.on('SIGABRT', close);
     process.on('SIGKILL', close);
     process.on('SIGBREAK', close);
@@ -123,12 +139,17 @@ async function startTunnel(_: never, command: Command, x, y, z){
     process.on('SIGQUIT', close);
     process.on('SIGTERM', close);
 
-    async function close() {
+    tunnel.on('tunnel-close', close);
+
+    async function close(code = 0) {
         
         console.warn('Closing tunnel...')
-        await tunnel.close();
+        console.info();
+        if (tunnel.status !== 'closed' && tunnel.status !== 'closing')
+            await tunnel.close();
         // This is just in case the tunnel doesn't close properly.
-        process.exit();
+
+        process.exit(code);
     }
 }
 
