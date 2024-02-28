@@ -1,7 +1,7 @@
 import { createLogger, format } from "../logger";
 import { Duplex } from "node:stream";
 import net, { type AddressInfo } from 'node:net';
-import { isDestroyedSocketError, type SocketError, isSocketError, isRejectedCode } from '../errors/socket-error';
+import { type SocketError, isRejectedCode } from '../errors/socket-error';
 import { type TunnelEventEmitter } from '../errors/tunnel-events';
 import { createServer, type IncomingMessage, type Server } from 'node:http'
 import { type TunnelConfig } from '../client/client-config';

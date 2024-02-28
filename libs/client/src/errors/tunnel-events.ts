@@ -2,8 +2,9 @@ import { type UpstreamTunnelError } from "./upstream-tunnel-errors"
 import { type ProxyTunnelError } from "./proxy-tunnel-error"
 import { type DownstreamTunnelError } from "./downstream-tunnel-errors"
 
-// TODO document custom errors and handlers
-
+/**
+ * Event listener options for the `@local-tunnel/client`
+ */
 export type TunnelEventListener<T> = 
     & TunnelOpenHandler<T> 
     & TunnelCloseHandler<T>
@@ -11,6 +12,9 @@ export type TunnelEventListener<T> =
     & ProxyErrorHandler<T>
     & DownstreamErrorHandler<T>
 
+/**
+ * Event emitter options for the `@local-tunnel/client`
+ */
 export type TunnelEventEmitter = {
     on: TunnelEventListener<TunnelEventEmitter>,
     emit: 

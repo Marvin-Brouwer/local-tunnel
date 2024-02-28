@@ -3,6 +3,10 @@ import { format } from "../logger";
 import { LocalTunnelError } from "./local-tunnel-error";
 import { type SocketError, isSocketError, cleanSocketError } from './socket-error';
 
+/**
+ * Base error indicating something failed in the connection to the `downstream` tunnel connection.  
+ * Meaning, the tunnel you registered to expose to the `local-tunnel` server.
+ */
 export abstract class DownstreamTunnelError extends LocalTunnelError {
     public static isDownstreamTunnelError(error: Error): error is DownstreamTunnelError {
         return error.constructor.name == DownstreamTunnelError.name;
@@ -11,6 +15,12 @@ export abstract class DownstreamTunnelError extends LocalTunnelError {
     public abstract readonly reason: string
 } 
 
+/**
+ * Error indicating the `downstream` tunnel rejected connection.   
+ *   
+ * This is most likely due to the local service restarting or not running at all.  
+ * If this is not the case, you should check your firewall settings.
+ */
 export class DownstreamTunnelRejectedError extends LocalTunnelError {
     public static isDownstreamTunnelRejectedError(error: Error): error is DownstreamTunnelRejectedError {
         return error.constructor.name == DownstreamTunnelRejectedError.name;
@@ -30,6 +40,12 @@ export class DownstreamTunnelRejectedError extends LocalTunnelError {
     }
 }
 
+/**
+ * Error indicating the `downstream` tunnel or host had an unexpected error.   
+ *   
+ * **Note:** We like to keep the unexpected errors to a minimum.  
+ * If you encounter any, please report a bug at {@link https://github.com/Marvin-Brouwer/local-tunnel/issues}
+ */
 export class UnknownDownstreamTunnelError extends LocalTunnelError {
     public static isUnknownDownstreamTunnelError(error: Error): error is UnknownDownstreamTunnelError {
         return error.constructor.name == UnknownDownstreamTunnelError.name;
