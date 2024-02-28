@@ -31,6 +31,8 @@ export default defineConfig({
 		target: ['ESNext'],
 		outDir: outputDir,
 		sourcemap: true,
+		// This is to prevent issues with workspace files reading `*.d.ts` files.
+		emptyOutDir: !isDev,
         rollupOptions: {
 			external: [
 				/^node\:/
