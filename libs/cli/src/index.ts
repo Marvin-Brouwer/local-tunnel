@@ -1,8 +1,10 @@
 import packageConfig from '../package.json' assert { type: 'json' };
 import cp from 'node:child_process';
 
-import { program, InvalidArgumentError, Command } from 'commander';
+import { program, Command } from 'commander';
 import { createLocalTunnel } from '@local-tunnel/client';
+import { validatePort } from './validators/portValidator';
+import { validatePath } from './validators/pathValidator';
 
 program
   .name(packageConfig.name)
@@ -16,9 +18,9 @@ program
     .option('-h, --remote-host <string>', 'Upstream server\'s hostname, server providing forwarding', 'localtunnel.me')
     .option('-s, --subdomain <string>', 'Request a subdomain, if left out or unavailable will return a random domain')
 
-    .option<string>('--local-cert <string>', 'Path to certificate PEM file for local HTTPS server', validatePathExist)
-    .option<string>('--local-key <string>', 'Path to certificate key file for local HTTPS server', validatePathExist)
-    .option<string>('--local-ca <string>', 'Path to certificate authority file for self-signed certificates', validatePathExist)
+    .option<string>('--local-cert <string>', 'Path to certificate PEM file for local HTTPS server', validatePath)
+    .option<string>('--local-key <string>', 'Path to certificate key file for local HTTPS server', validatePath)
+    .option<string>('--local-ca <string>', 'Path to certificate authority file for self-signed certificates', validatePath)
 
     .option('--local-https', 'Tunnel traffic to a local HTTPS server', false)
     .option('--allow-invalid-cert, --skip-cert-val', 'Disable certificate checks for your local HTTPS server (ignore cert/key/ca options)', false)
@@ -26,21 +28,6 @@ program
     .option('-o, --open-url', 'Opens the tunnel URL in your browser, on connection', false)
 
     .action(startTunnel);
-
-function validatePort(value: string) {
-    
-    const parsedValue = parseInt(value, 10);
-    if (isNaN(parsedValue)) throw new InvalidArgumentError('Not a number.');
-    
-    return parsedValue;
-}
-function validatePathExist(value: string) {
-    
-    // TODO check path exists
-    if (false) throw new InvalidArgumentError('Not a number.');
-    
-    return value;
-}
 
 async function startTunnel(_: never, command: Command){
 
@@ -149,7 +136,6 @@ async function startTunnel(_: never, command: Command){
         }
         if (tunnel.status !== 'closed' && tunnel.status !== 'closing')
             await tunnel.close();
-        // This is just in case the tunnel doesn't close properly.
 
         process.exit(code);
     }

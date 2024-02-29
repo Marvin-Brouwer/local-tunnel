@@ -7,7 +7,7 @@
       "@local-tunnel/client": ["../client"],
     },
     "include": [
-        "./src/*",
+        "./src/**/*.*",
         "./plugins/*.*",
         "./package.json"
     ]
