@@ -7,13 +7,11 @@ import { type TunnelEventEmitter, type TunnelEventListener } from '../errors/tun
 import { createUpstreamConnection } from '../tunnel/upstream-connection';
 import { createProxyConnection } from '../tunnel/proxy-connection';
 import { format } from '../logger';
-import { LeaseRejectedError } from '../errors/upstream-tunnel-errors';
 
 export const createLocalTunnel = async (config: ClientConfig): Promise<TunnelClient> => {
 
     const tunnelConfig = applyConfig(config);
-    const tunnelLease = await getTunnelLease(tunnelConfig)
-        .catch((err) => { throw new LeaseRejectedError(tunnelConfig, err); });
+    const tunnelLease = await getTunnelLease(tunnelConfig);
 
     return new TunnelClient(
         tunnelConfig,

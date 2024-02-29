@@ -143,8 +143,10 @@ async function startTunnel(_: never, command: Command){
 
     async function close(code = 0) {
         
-        console.warn('Closing tunnel...')
-        console.info();
+        if (code !== -1) {
+            console.warn('Closing tunnel...')
+            console.warn();
+        }
         if (tunnel.status !== 'closed' && tunnel.status !== 'closing')
             await tunnel.close();
         // This is just in case the tunnel doesn't close properly.

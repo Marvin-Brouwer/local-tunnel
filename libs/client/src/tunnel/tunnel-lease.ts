@@ -1,4 +1,5 @@
 import { TunnelConfig } from '../client/client-config';
+import { LeaseFetchRejectedError, LeaseFetchResponseError } from '../errors/upstream-tunnel-errors';
 
 const randomDomain = Symbol.for('?new');
 
@@ -44,10 +45,11 @@ const getLeaseUrl = (config: TunnelConfig): string => {
 export const getTunnelLease = async (config: TunnelConfig): Promise<TunnelLease>  => {
     
     const url = getLeaseUrl(config);
-    const leaseFetchResponse = await fetch(url);
-    // TODO specific error(s)
+    const leaseFetchResponse = await fetch(url)
+        .catch(err => { throw new LeaseFetchRejectedError(config, err) });
+
     if (!leaseFetchResponse.ok) 
-        throw new Error(leaseFetchResponse.statusText)
+        throw new LeaseFetchResponseError(config, leaseFetchResponse)
 
     // TODO ZOD
     const leaseResponse = await leaseFetchResponse.json() as TunnelLeaseResponse

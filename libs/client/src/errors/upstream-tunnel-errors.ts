@@ -40,15 +40,16 @@ export class UpstreamTunnelRejectedError extends LocalTunnelError {
             `Check your firewall for outbound rules to the tunnel or inbound rules for port ${tunnelLease.remote.port}`;
     }
 }
+
 /**
- * Error indicating the `upstream` tunnel rejected the lease request.   
+ * Error indicating the lease fetch to the `upstream` tunnel failed.   
  *   
  * This is most likely due to the upstream server restarting or network errors.  
  * If this is not the case, you should check your firewall settings.
  */
-export class LeaseRejectedError extends LocalTunnelError {
-    public static isLeaseRejectedError(error: Error): error is LeaseRejectedError {
-        return error.constructor.name == LeaseRejectedError.name;
+export class LeaseFetchRejectedError extends LocalTunnelError {
+    public static isLeaseRejectedFetchError(error: Error): error is LeaseFetchRejectedError {
+        return error.constructor.name == LeaseFetchRejectedError.name;
     }
 
     public get reason() {
@@ -57,10 +58,36 @@ export class LeaseRejectedError extends LocalTunnelError {
     
     constructor(tunnelConfig: TunnelConfig, private readonly error: Error) {
         super();
+
+        this.error == cleanSocketError(error);
         
-        this.error = cleanSocketError(error);
         this.message = 
-            `The upstream tunnel ${format.remoteOrigin(tunnelConfig)} rejected the lease request.` + '\n' +
+            `The upstream tunnel ${format.remoteOrigin(tunnelConfig)} rejected the lease request ` + '\n' +
+            `Check your firewall for outbound rules to the tunnel`;
+    }
+}
+
+/**
+ * Error indicating the `upstream` tunnel rejected the lease request.   
+ *   
+ * This is most likely due to the upstream server restarting or network errors.  
+ * If this is not the case, you should check your firewall settings.
+ */
+export class LeaseFetchResponseError extends LocalTunnelError {
+    public static isLeaseRejectedError(error: Error): error is LeaseFetchResponseError {
+        return error.constructor.name == LeaseFetchResponseError.name;
+    }
+
+    public get reason() {
+        return `${this.response.status} ${this.response.statusText}`;
+    }
+    
+    constructor(tunnelConfig: TunnelConfig, private readonly response: Response) {
+        super();
+        
+        this.message = 
+            `The upstream tunnel ${format.remoteOrigin(tunnelConfig)} rejected the lease request ` + '\n' +
+            `with a response of: ${response.status} ${response.statusText}` + '\n' +
             `Check your firewall for outbound rules to the tunnel`;
     }
 }
