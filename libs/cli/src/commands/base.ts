@@ -24,9 +24,7 @@ export const applyEaseOfUseOptions = (command: Command) => command
 
 export const getBaseOptions = (command: Command) => {
     
-    const { hostname: localHost, port: rawPort } = command.optsWithGlobals().origin as URL;
-    const localPort = parseInt(rawPort)
-
+    const localHost = command.optsWithGlobals().origin as URL;
     const remoteHost = command.optsWithGlobals().remoteHost as string;
     const subdomain = command.optsWithGlobals().subdomain as string | undefined;
     const printRequestInfo = command.optsWithGlobals().printRequests as boolean;
@@ -34,7 +32,6 @@ export const getBaseOptions = (command: Command) => {
 
     return {
         localHost,
-        localPort,
         remoteHost,
         subdomain,
         printRequestInfo,

@@ -18,10 +18,7 @@ export type ServerHostConfig = {
 
 export type ClientConfig = {
 
-    port: number
-    hostName?: string
-    // TODO retryPolicy
-
+    localHost: URL,
     server?: ServerHostConfig,
     https?: HttpsConfig
 }
@@ -32,9 +29,7 @@ export type TunnelConfig = Required<Omit<ClientConfig, 'https'>> & {
     https?: HttpsConfig
 }
 
-const defaultConfig = (port: number): TunnelConfig => ({
-    port,
-    hostName: 'localhost',
+const defaultConfig = (): Omit<TunnelConfig, 'localHost'> => ({
     server: {
         hostName: 'localtunnel.me',
         subdomain: undefined
@@ -44,5 +39,5 @@ const defaultConfig = (port: number): TunnelConfig => ({
 export const applyConfig = (config: ClientConfig): TunnelConfig => {
     // TODO Validate config
     
-    return Object.assign({}, defaultConfig(config.port), JSON.parse(JSON.stringify(config)))
+    return Object.assign({}, defaultConfig(), JSON.parse(JSON.stringify(config)), { localHost: config.localHost })
 }

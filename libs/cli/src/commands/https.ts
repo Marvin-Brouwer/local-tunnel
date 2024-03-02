@@ -22,7 +22,7 @@ const getHttpsOptions = (command: Command) => {
 
 async function callHttpsCommand(_:never, command: Command) {
 
-    const { localHost, localPort, remoteHost, subdomain, printRequestInfo, openUrlOnConnect } = getBaseOptions(command);
+    const { localHost, remoteHost, subdomain, printRequestInfo, openUrlOnConnect } = getBaseOptions(command);
     const { localCert, skipCertificateValidation } = getHttpsOptions(command);
     
     const https = {
@@ -31,8 +31,7 @@ async function callHttpsCommand(_:never, command: Command) {
     };
 
     await openLocalTunnel(printRequestInfo, openUrlOnConnect, {
-        port: localPort,
-        hostName: localHost,
+        localHost,
         server: {
             hostName: remoteHost,
             subdomain

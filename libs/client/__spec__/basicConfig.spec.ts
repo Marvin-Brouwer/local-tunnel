@@ -4,8 +4,7 @@
 import { createLocalTunnel } from "../src/index";
 
 const tunnel = await createLocalTunnel({
-    port: 4321,
-    // host: 'localhost',
+    localHost: new URL('https://localhost:4321'),
     // server: {
     //     hostName: ...,
     //     subdomain: ...
@@ -23,14 +22,15 @@ const tunnel = await createLocalTunnel({
 tunnel.on('pipe-request', (method, path) => {
 	console.info(method, path)
 })
-tunnel.on('pipe-error', (err) => {
-	console.error('ERROR', err)
+
+tunnel.on('upstream-error', (err) => {
+    console.error((err))
 })
-tunnel.on('tunnel-error', (err) => {
-	console.error('FAIL', err)
+tunnel.on('proxy-error', (err) => {
+    console.error((err))
 })
-tunnel.on('tunnel-dead', (reason) => {
-	console.error('DEAD', reason)
+tunnel.on('downstream-error', (err) => {
+    console.error((err))
 })
 tunnel.on('tunnel-open', () => {
 	console.info('Tunnel opened')

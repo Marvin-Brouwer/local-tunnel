@@ -35,7 +35,7 @@ export const format = {
         return `${schema}://${tunnelConfig.server.hostName}`
     },
     localAddress: (tunnelConfig: TunnelConfig) => 
-      `${!!tunnelConfig.https ? 'https' : 'http'}://${tunnelConfig.hostName}:${tunnelConfig.port}`,
+        tunnelConfig.localHost.href,
     address: (addressInfo: AddressInfo | string) => {
         if (!isAddressInfo(addressInfo)) return addressInfo;
         if (addressInfo.family === 'IPv6') {

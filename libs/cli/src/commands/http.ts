@@ -9,11 +9,10 @@ const applyHttpCommand = applyOptions(
 
 async function callHttpCommand(_:never, command: Command) {
 
-    const { localHost, localPort, remoteHost, subdomain, printRequestInfo, openUrlOnConnect } = getBaseOptions(command);
+    const { localHost, remoteHost, subdomain, printRequestInfo, openUrlOnConnect } = getBaseOptions(command);
     
     await openLocalTunnel(printRequestInfo, openUrlOnConnect, {
-        port: localPort,
-        hostName: localHost,
+        localHost,
         server: {
             hostName: remoteHost,
             subdomain

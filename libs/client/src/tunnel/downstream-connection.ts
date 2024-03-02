@@ -1,6 +1,6 @@
 import { createLogger, format } from "../logger";
 import { Duplex } from "node:stream";
-import net from 'node:net';
+import net, { TcpSocketConnectOpts } from 'node:net';
 import { SocketError, isRejectedCode } from "../errors/socket-error";
 import { type TunnelEventEmitter } from '../errors/tunnel-events';
 import { type TunnelConfig } from "../client/client-config";
@@ -27,9 +27,11 @@ const createConnection = (tunnelConfig: TunnelConfig, emitter: TunnelEventEmitte
 	logger.enabled
 		&& logger.log('establishing local connection to %s', format.localAddress(tunnelConfig));
 
-	const localSocketAddress = {
-		host: tunnelConfig.hostName,
-		port: tunnelConfig.port,
+	const localSocketAddress: TcpSocketConnectOpts = {
+		host: tunnelConfig.localHost.host,
+		port: tunnelConfig.localHost.port === ''
+			? undefined
+			: +tunnelConfig.localHost.port,
 	};
 
 	const { https } = tunnelConfig;

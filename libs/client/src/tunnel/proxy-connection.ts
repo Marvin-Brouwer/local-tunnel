@@ -176,7 +176,7 @@ const createConnection = (address: AddressInfo, emitter: TunnelEventEmitter) => 
 	});
 });
 
-// TODO this could be more efficient
+// This could probably be more efficient, but for now it's good enough
 const mapHeaders = (headers: string[]): string[][] => {
 	let headerString = '';
 	headers.forEach((element, index) => {
