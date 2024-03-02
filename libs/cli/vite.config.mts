@@ -9,6 +9,7 @@ import packageConfig from './package.json' assert { type: 'json' };
 import serveDummy from './plugins/dummy-server';
 
 const isDev = process.argv.join(' ').includes('--mode development');
+const lintFix = process.argv.includes('--lint-fix');
 const entry = path.resolve(__dirname, 'src/index.ts');
 const packageNameDefinition = packageConfig.name.split('/');
 const packageName = packageNameDefinition[1];
@@ -26,11 +27,11 @@ export default defineConfig((configEnv) => ({
 					configEnv,
 					serveOptions: {
 						clearCacheOnStart: true,
-						fix: true,
+						fix: lintFix,
 					},
 					buildOptions: {
 						useEslintrc: true,
-						fix: isDev,
+						fix: lintFix,
 					},
 				}),
 			],

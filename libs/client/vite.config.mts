@@ -9,6 +9,7 @@ import { EsLinter, linterPlugin } from 'vite-plugin-linter';
 import packageConfig from './package.json' assert { type: 'json' };
 
 const isDev = process.argv.join(' ').includes('--mode development');
+const lintFix = process.argv.includes('--lint-fix');
 const srcFolder = path.resolve(__dirname, 'src');
 const entry = path.resolve(srcFolder, 'index.ts');
 const packageNameDefinition = packageConfig.name.split('/');
@@ -27,11 +28,11 @@ export default defineConfig((configEnv) => ({
 					configEnv,
 					serveOptions: {
 						clearCacheOnStart: true,
-						fix: true,
+						fix: lintFix,
 					},
 					buildOptions: {
 						useEslintrc: true,
-						fix: isDev,
+						fix: lintFix,
 					},
 				}),
 			],

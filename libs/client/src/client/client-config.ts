@@ -1,27 +1,34 @@
-// TODO ZOD?
+import zod from 'zod';
 
-export type CertificateConfig = {
-    pemLocation: string,
-    keyLocation: string,
-    certificateAuthorityLocation?: string,
-}
+const certificateConfig = zod
+	.object({
+		pemLocation: zod.string().trim(),
+		keyLocation: zod.string().trim(),
+		certificateAuthorityLocation: zod.string().trim().optional(),
+	});
+export interface CertificateConfig extends zod.infer<typeof certificateConfig> { }
 
-export type HttpsConfig = {
-    skipCertificateValidation?: boolean,
-    cert?: CertificateConfig
-}
+const httpsConfig = zod
+	.object({
+		skipCertificateValidation: zod.boolean().default(false).optional(),
+		cert: (certificateConfig as zod.ZodType<CertificateConfig>).optional(),
+	});
+export interface HttpsConfig extends zod.infer<typeof httpsConfig> {}
 
-export type ServerHostConfig = {
-    hostName?: string
-    subdomain?: string
-}
+const serverConfig = zod
+	.object({
+		hostName: zod.string().trim().optional(),
+		subdomain: zod.string().trim().optional(),
+	});
+export interface ServerHostConfig extends zod.infer<typeof serverConfig> {}
 
-export type ClientConfig = {
-
-    localHost: URL,
-    server?: ServerHostConfig,
-    https?: HttpsConfig
-}
+const clientConfig = zod
+	.object({
+		localHost: zod.instanceof(URL), // todo no path etc.
+		server: (serverConfig as zod.ZodType<ServerHostConfig>).default({ hostName: 'localtunnel.me' }).optional(),
+		https: (httpsConfig as zod.ZodType<HttpsConfig>).default({ }).optional(),
+	});
+export interface ClientConfig extends zod.infer<typeof clientConfig> { }
 
 export type TunnelConfig = Required<Omit<ClientConfig, 'https'>> & {
 
@@ -29,15 +36,4 @@ export type TunnelConfig = Required<Omit<ClientConfig, 'https'>> & {
     https?: HttpsConfig
 }
 
-const defaultConfig = (): Omit<TunnelConfig, 'localHost'> => ({
-	server: {
-		hostName: 'localtunnel.me',
-		subdomain: undefined,
-	},
-	https: undefined,
-});
-
-export function applyConfig(config: ClientConfig): TunnelConfig {
-	// TODO Validate config
-	return { ...defaultConfig(), ...JSON.parse(JSON.stringify(config)), localHost: config.localHost };
-}
+export const applyConfig = (config: ClientConfig) => clientConfig.parse(config) as TunnelConfig;

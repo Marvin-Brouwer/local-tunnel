@@ -9,9 +9,9 @@ module.exports = {
 		'plugin:import/typescript',
 		// 'plugin:jest/recommended'
 	],
+    ignorePatterns: ['node_modules', '*.html'],
 	plugins: [
 		// 'jest', 
-		'typescript',
 		'@typescript-eslint',
 		'import'
 	],

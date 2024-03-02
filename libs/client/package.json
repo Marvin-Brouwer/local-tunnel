@@ -22,6 +22,9 @@
   "scripts": {
     "watch": "pnpm build --mode development --watch",
     "build": "vite build",
+    "build:production": "vite optimize && vite build --mode production",
+    "lint": "pnpm eslint -c ../../.eslintrc.js ./src/** ./vite.config.mts",
+    "lint:fix": "pnpm lint --fix",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -36,6 +39,7 @@
     "vite-plugin-linter": "^2.1.1"
   },
   "dependencies": {
-    "debug": "^4.3.4"
+    "debug": "^4.3.4",
+    "zod": "^3.22.4"
   }
 }

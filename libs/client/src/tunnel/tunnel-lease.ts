@@ -46,7 +46,7 @@ const createTunnelLease = (config: TunnelConfig, leaseResponse: TunnelLeaseRespo
 	id: leaseResponse.id,
 
 	tunnelUrl: new URL(leaseResponse.url),
-	cachedTunnelUrl: leaseResponse.cached_url && new URL(leaseResponse.cached_url),
+	cachedTunnelUrl: leaseResponse.cached_url ? new URL(leaseResponse.cached_url) : undefined,
 
 	client: {
 		publicIp: clientIp,
@@ -70,7 +70,7 @@ export const getTunnelLease = async (config: TunnelConfig): Promise<TunnelLease>
 
 	if (!leaseFetchResponse.ok) { throw new LeaseFetchResponseError(config, leaseFetchResponse); }
 
-	// TODO ZOD
+	// This may be a good spot for ZOD if we ever take in the server app too.
 	const leaseResponse = await leaseFetchResponse.json() as TunnelLeaseResponse;
 	const clientIp = await fetch('https://api.ipify.org')
 		.then((response) => response.text())
