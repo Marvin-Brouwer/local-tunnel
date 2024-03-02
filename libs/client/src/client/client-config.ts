@@ -30,14 +30,14 @@ export type TunnelConfig = Required<Omit<ClientConfig, 'https'>> & {
 }
 
 const defaultConfig = (): Omit<TunnelConfig, 'localHost'> => ({
-    server: {
-        hostName: 'localtunnel.me',
-        subdomain: undefined
-    },
-    https: undefined
-})
-export const applyConfig = (config: ClientConfig): TunnelConfig => {
-    // TODO Validate config
-    
-    return Object.assign({}, defaultConfig(), JSON.parse(JSON.stringify(config)), { localHost: config.localHost })
+	server: {
+		hostName: 'localtunnel.me',
+		subdomain: undefined,
+	},
+	https: undefined,
+});
+
+export function applyConfig(config: ClientConfig): TunnelConfig {
+	// TODO Validate config
+	return { ...defaultConfig(), ...JSON.parse(JSON.stringify(config)), localHost: config.localHost };
 }

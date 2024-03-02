@@ -1,120 +1,134 @@
 import '../tunnel/transforms/header-host-transform';
 
 import { type Duplex, EventEmitter } from 'node:stream';
-import { applyConfig, type TunnelConfig, type ClientConfig } from './client-config';
-import { getTunnelLease, type TunnelLease } from '../tunnel/tunnel-lease';
+
+import { type ClientConfig, type TunnelConfig, applyConfig } from './client-config';
 import { type TunnelEventEmitter, type TunnelEventListener } from '../errors/tunnel-events';
-import { createUpstreamConnection } from '../tunnel/upstream-connection';
-import { createProxyConnection } from '../tunnel/proxy-connection';
 import { format } from '../logger';
-
-export const createLocalTunnel = async (config: ClientConfig): Promise<TunnelClient> => {
-
-    const tunnelConfig = applyConfig(config);
-    const tunnelLease = await getTunnelLease(tunnelConfig);
-
-    return new TunnelClient(
-        tunnelConfig,
-        tunnelLease
-    )
-}
+import { createProxyConnection } from '../tunnel/proxy-connection';
+import { type TunnelLease, getTunnelLease } from '../tunnel/tunnel-lease';
+import { createUpstreamConnection } from '../tunnel/upstream-connection';
 
 export class TunnelClient {
+	#emitter: EventEmitter & TunnelEventEmitter;
 
-    #emitter: EventEmitter & TunnelEventEmitter;
-    #upstream: Duplex;
-    #fallback: Duplex;
+	#upstream: Duplex;
 
-    #status: 'open' | 'closed' | 'connecting' | 'closing' 
+	#fallback: Duplex;
 
-    public get status() {
-        return this.#status
-    }
-    public get url() {
-        return this.tunnelLease.tunnelUrl
-    }
-    public get cachedUrl() {
-        return this.tunnelLease.cachedTunnelUrl
-    }
-    public get localAddress() {
-        return format.localAddress(this.tunnelConfig);
-    }
-    public get password() {
-        return this.tunnelLease.client.publicIp
-    }
+	#status: 'open' | 'closed' | 'connecting' | 'closing';
 
-    constructor(
+	public get status() {
+		return this.#status;
+	}
+
+	public get url() {
+		return this.tunnelLease.tunnelUrl;
+	}
+
+	public get cachedUrl() {
+		return this.tunnelLease.cachedTunnelUrl;
+	}
+
+	public get localAddress() {
+		return format.localAddress(this.tunnelConfig);
+	}
+
+	public get password() {
+		return this.tunnelLease.client.publicIp;
+	}
+
+	constructor(
+		// Can't get the linter to work with constructor args
+		// eslint-disable-next-line no-unused-vars
         readonly tunnelConfig: TunnelConfig,
-        readonly tunnelLease: TunnelLease
-    ) {
-        this.#emitter = new EventEmitter({ captureRejections: true }) as EventEmitter & TunnelEventEmitter;
-    }
+        // Can't get the linter to work with constructor args
+        // eslint-disable-next-line no-unused-vars
+        readonly tunnelLease: TunnelLease,
+	) {
+		this.#emitter = new EventEmitter({
+			captureRejections: true,
+		}) as EventEmitter & TunnelEventEmitter;
+	}
 
-    public async open(): Promise<this> {
-        if (this.status === 'connecting') {
-            console.warn('Tunnel was already connecting, noop.');
-            return this;
-        }
-        if (this.status === 'open') {
-            console.warn('Tunnel was already open, noop.');
-            return this;
-        }
-        
-        this.#status === 'connecting';
-        this.#fallback = await createProxyConnection(this.tunnelConfig, this.tunnelLease, this.#emitter);
-        this.#fallback.pause();
+	public async open(): Promise<this> {
+		if (this.status === 'connecting') {
+			// eslint-disable-next-line no-console
+			console.warn('Tunnel was already connecting, noop.');
+			return this;
+		}
+		if (this.status === 'open') {
+			// eslint-disable-next-line no-console
+			console.warn('Tunnel was already open, noop.');
+			return this;
+		}
 
-        this.#emitter.setMaxListeners(this.tunnelLease.maximumConnections);
+		this.#status = 'connecting';
+		this.#fallback = await createProxyConnection(this.tunnelConfig, this.tunnelLease, this.#emitter);
+		this.#fallback.pause();
 
-        this.#upstream = await createUpstreamConnection(this.tunnelLease, this.#emitter);
-        this.#upstream
-            .transformHeaderHost(this.tunnelConfig)
-            .on('data', (chunk: Buffer) => {
-                const httpLeader = chunk.toString().split(/(\r\n|\r|\n)/)[0]
-                const [method, path] = httpLeader.split(' ');
-                this.#emitter.emit('pipe-request', method, path)
-            })
-            .pipe(this.#fallback)
-            .pipe(this.#upstream)
-            .on('close', () => {
-                if(this.#status !== 'closed' && !this.#upstream.destroyed)
-                    this.#emitter.emit('tunnel-close');
-            });
+		this.#emitter.setMaxListeners(this.tunnelLease.maximumConnections);
 
-        this.#fallback
-            .resume();
-        
-        this.#status = 'open';
+		this.#upstream = await createUpstreamConnection(this.tunnelLease, this.#emitter);
+		this.#upstream
+			.transformHeaderHost(this.tunnelConfig)
+			.on('data', (chunk: Buffer) => {
+				const httpLeader = chunk.toString().split(/(\r\n|\r|\n)/)[0];
+				const [method, path] = httpLeader.split(' ');
+				this.#emitter.emit('pipe-request', method, path);
+			})
+			.pipe(this.#fallback)
+			.pipe(this.#upstream)
+			.on('close', () => {
+				if (this.#status !== 'closed' && !this.#upstream.destroyed) { this.#emitter.emit('tunnel-close'); }
+			});
+
+		this.#fallback
+			.resume();
+
+		this.#status = 'open';
 		this.#emitter.emit('tunnel-open');
 
-        return this;
-    }
+		return this;
+	}
 
-    public async close(): Promise<this> {
-        if (this.status === 'closed' || this.status === 'closing') {
-            console.warn('Tunnel was already closed, noop.');
-            return this;
-        }
-        
-        this.#status = 'closing';
+	public async close(): Promise<this> {
+		if (this.status === 'closed' || this.status === 'closing') {
+			// eslint-disable-next-line no-console
+			console.warn('Tunnel was already closed, noop.');
+			return this;
+		}
 
-        await Promise.all([
-            new Promise(r => this.#fallback.end(r)),
-            new Promise(r => this.#upstream.end(r))
-        ])
-        if (!this.#upstream.destroyed)
-		    this.#emitter.emit('tunnel-closed');
+		this.#status = 'closing';
 
-        this.#fallback.destroy();
-        this.#upstream.destroy();
-        
-        this.#status = 'closed';
+		await Promise.all([
+			// eslint-disable-next-line no-promise-executor-return
+			new Promise<void>((r) => this.#fallback.end(r)),
+			// eslint-disable-next-line no-promise-executor-return
+			new Promise<void>((r) => this.#upstream.end(r)),
+		]);
+		if (!this.#upstream.destroyed) { this.#emitter.emit('tunnel-closed'); }
 
-        return this;
-    }
+		this.#fallback.destroy();
+		this.#upstream.destroy();
 
-    public on: TunnelEventListener<this> = (eventName, listener) => {
-        this.#emitter.on(eventName, listener);
-        return this;
-    }
+		this.#status = 'closed';
+
+		return this;
+	}
+
+	public on: TunnelEventListener<this> = (eventName, listener) => {
+		this.#emitter.on(eventName, listener);
+		return this;
+	};
 }
+
+export const createLocalTunnel = async (config: ClientConfig): Promise<TunnelClient> => {
+	const tunnelConfig = applyConfig(config);
+	const tunnelLease = await getTunnelLease(tunnelConfig);
+
+	return new TunnelClient(
+		tunnelConfig,
+		tunnelLease,
+	);
+};

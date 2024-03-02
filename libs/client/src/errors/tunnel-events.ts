@@ -1,12 +1,15 @@
-import { type UpstreamTunnelError } from "./upstream-tunnel-errors"
-import { type ProxyTunnelError } from "./proxy-tunnel-error"
-import { type DownstreamTunnelError } from "./downstream-tunnel-errors"
+/* eslint-disable no-use-before-define */
+/* eslint-disable no-unused-vars */
+
+import { type DownstreamTunnelError } from './downstream-tunnel-errors';
+import { type ProxyTunnelError } from './proxy-tunnel-error';
+import { type UpstreamTunnelError } from './upstream-tunnel-errors';
 
 /**
  * Event listener options for the `@local-tunnel/client`
  */
-export type TunnelEventListener<T> = 
-    & TunnelOpenHandler<T> 
+export type TunnelEventListener<T> =
+    & TunnelOpenHandler<T>
     & TunnelCloseHandler<T>
     & UpstreamErrorHandler<T>
     & ProxyErrorHandler<T>
@@ -18,15 +21,14 @@ export type TunnelEventListener<T> =
  */
 export type TunnelEventEmitter = {
     on: TunnelEventListener<TunnelEventEmitter>,
-    emit: 
-        & TunnelOpenEmitter<TunnelEventEmitter> 
+    emit:
+        & TunnelOpenEmitter<TunnelEventEmitter>
         & TunnelCloseEmitter<TunnelEventEmitter>
         & UpstreamErrorEmitter<TunnelEventEmitter>
         & ProxyErrorEmitter<TunnelEventEmitter>
         & DownstreamErrorEmitter<TunnelEventEmitter>
         & TunnelRequestEmitter<TunnelEventEmitter>
 }
-
 
 type UpstreamErrorEmitter<T> = (eventName: 'upstream-error', error: UpstreamTunnelError) => T
 type UpstreamErrorHandler<T> = (eventName: 'upstream-error', listener: (error: UpstreamTunnelError) => void) => T

@@ -1,7 +1,9 @@
-// @ts-ignore-next-line
-import packageConfig from './package.json' assert { type: 'json' };
+/* eslint-disable import/no-extraneous-dependencies */
 import path from 'path';
+
 import { defineConfig } from 'vite';
+
+import packageConfig from './package.json' assert { type: 'json' };
 
 const entry = path.resolve(__dirname, 'src', 'index.ts');
 const packageNameDefinition = packageConfig.name.split('/');

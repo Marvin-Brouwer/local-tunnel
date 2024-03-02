@@ -1,85 +1,84 @@
-import { TunnelConfig } from '../client/client-config';
+import { type TunnelConfig } from '../client/client-config';
 import { LeaseFetchRejectedError, LeaseFetchResponseError } from '../errors/upstream-tunnel-errors';
 
 const randomDomain = Symbol.for('?new');
 
 export type TunnelLease = {
 
-    id: string,
+	id: string,
 
-    tunnelUrl: URL,
-    cachedTunnelUrl: URL | undefined,
+	tunnelUrl: URL,
+	cachedTunnelUrl: URL | undefined,
 
-    client: {
-        publicIp: string | undefined
-    },
+	client: {
+		publicIp: string | undefined
+	},
 
-    remote: {
-        ip: string | undefined,
-        target: string,
-        port: number
-    },
+	remote: {
+		ip: string | undefined,
+		target: string,
+		port: number
+	},
 
-    httpsEnabled: boolean
-    maximumConnections: number
+	httpsEnabled: boolean
+	maximumConnections: number
 }
 
 type TunnelLeaseResponse = {
-    id: string, 
-    ip: string, 
-    port: number, 
-    url: string, 
-    cached_url: string, 
-    max_conn_count: number | undefined
+	id: string,
+	ip: string,
+	port: number,
+	url: string,
+	cached_url: string,
+	max_conn_count: number | undefined
 }
 
 const getLeaseUrl = (config: TunnelConfig): string => {
-    
-    const schema = import.meta.env.VITE_SERVER_SCHEMA ?? 'https';
-    const { subdomain } = config.server;
-    const assignedDomain = subdomain ?? randomDomain.description
-      
-    return `${schema}://${config.server.hostName}/${assignedDomain}`;
-}
+	const schema = import.meta.env.VITE_SERVER_SCHEMA ?? 'https';
+	const { subdomain } = config.server;
+	const assignedDomain = subdomain ?? randomDomain.description;
 
-export const getTunnelLease = async (config: TunnelConfig): Promise<TunnelLease>  => {
-    
-    const url = getLeaseUrl(config);
-    const leaseFetchResponse = await fetch(url)
-        .catch(err => { throw new LeaseFetchRejectedError(config, err) });
+	return `${schema}://${config.server.hostName}/${assignedDomain}`;
+};
 
-    if (!leaseFetchResponse.ok) 
-        throw new LeaseFetchResponseError(config, leaseFetchResponse)
+// eslint-disable-next-line max-len
+const createTunnelLease = (config: TunnelConfig, leaseResponse: TunnelLeaseResponse, clientIp: string | undefined): TunnelLease => ({
+	id: leaseResponse.id,
 
-    // TODO ZOD
-    const leaseResponse = await leaseFetchResponse.json() as TunnelLeaseResponse
-    const clientIp = await fetch('https://api.ipify.org')
-        .then(response => response.text())
-        .catch(err =>  {
-            console.warn('Unable to determine tunnel password', err);
-            return undefined;
-        })
+	tunnelUrl: new URL(leaseResponse.url),
+	cachedTunnelUrl: leaseResponse.cached_url && new URL(leaseResponse.cached_url),
 
-    return createTunnelLease(config, leaseResponse, clientIp);
-}
+	client: {
+		publicIp: clientIp,
+	},
 
-const createTunnelLease = (config: TunnelConfig, leaseResponse: TunnelLeaseResponse, clientIp: string | undefined): TunnelLease  => ({
-    id: leaseResponse.id,
+	remote: {
+		ip: leaseResponse.ip,
+		// Prefer the ip if returned from the server
+		target: leaseResponse.ip ?? config.server.hostName,
+		port: leaseResponse.port,
+	},
 
-    tunnelUrl: new URL(leaseResponse.url),
-    cachedTunnelUrl: leaseResponse.cached_url && new URL(leaseResponse.cached_url),
+	httpsEnabled: !!config.https,
+	maximumConnections: leaseResponse.max_conn_count || 1,
+});
 
-    client: {
-        publicIp: clientIp
-    },
-    
-    remote: {
-        ip: leaseResponse.ip,
-        // Prefer the ip if returned from the server
-        target: leaseResponse.ip ?? config.server.hostName,
-        port: leaseResponse.port
-    },
+export const getTunnelLease = async (config: TunnelConfig): Promise<TunnelLease> => {
+	const url = getLeaseUrl(config);
+	const leaseFetchResponse = await fetch(url)
+		.catch((err) => { throw new LeaseFetchRejectedError(config, err); });
 
-    httpsEnabled: !!config.https,
-    maximumConnections: leaseResponse.max_conn_count || 1
-})
+	if (!leaseFetchResponse.ok) { throw new LeaseFetchResponseError(config, leaseFetchResponse); }
+
+	// TODO ZOD
+	const leaseResponse = await leaseFetchResponse.json() as TunnelLeaseResponse;
+	const clientIp = await fetch('https://api.ipify.org')
+		.then((response) => response.text())
+		.catch((err) => {
+			// eslint-disable-next-line no-console
+			console.warn('Unable to determine tunnel password', err);
+			return undefined;
+		});
+
+	return createTunnelLease(config, leaseResponse, clientIp);
+};
