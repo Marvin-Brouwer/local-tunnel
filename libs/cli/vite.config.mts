@@ -61,6 +61,7 @@ export default defineConfig((configEnv) => ({
 			output: {
 				compact: !isDev,
 				indent: isDev,
+				inlineDynamicImports: true,
 			},
 		},
 		lib: {

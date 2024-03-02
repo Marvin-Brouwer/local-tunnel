@@ -5,7 +5,6 @@ import path from 'node:path';
 import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
 import { EsLinter, linterPlugin } from 'vite-plugin-linter';
-import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 import packageConfig from './package.json' assert { type: 'json' };
 
@@ -40,17 +39,22 @@ export default defineConfig((configEnv) => ({
 				includeMode: 'filesInFolder',
 			},
 		}),
-		nodePolyfills({
-			include: [
-				'stream',
-			],
-			protocolImports: true,
-		}),
+		// nodePolyfills({
+		// 	include: [
+		// 		'stream',
+		// 	],
+		// 	protocolImports: true,
+		// }),
 		dts({
 			entryRoot: srcFolder,
 			outDir: path.join(outputDir, 'types'),
 		}),
 	],
+	// We need the exceptions to not mangle their names
+	esbuild: {
+		minifyIdentifiers: false,
+		keepNames: true,
+	},
 	build: {
 		// https://github.com/vitejs/vite/issues/13926#issuecomment-1708536097
 		minify: !isDev,
