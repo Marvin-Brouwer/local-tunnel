@@ -7,6 +7,7 @@ export default async () => {
         link: (url: URL | string) => chalk.underline.blueBright(url.toString()),
         error: (error: Error) => `${chalk.bold.red(error.name)}:\n  ${chalk.italic(`"${error.message}"`)}`,
         timestamp: (dateTime: Date) => chalk.green(dateTime.toISOString()),
-        password: (password: string) => chalk.italic.yellow.bold.italic(`'${password}'`)
+        password: (password: string) => chalk.yellow.bold.italic(`'${password}'`),
+        italic: (value: string) => chalk.italic(value)
     }
 }

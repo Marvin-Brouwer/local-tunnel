@@ -1,17 +1,17 @@
 // TODO ZOD?
 
-type CertificateConfig = {
+export type CertificateConfig = {
     pemLocation: string,
     keyLocation: string,
     certificateAuthorityLocation?: string,
 }
 
-type HttpsConfig = {
+export type HttpsConfig = {
     skipCertificateValidation?: boolean,
     cert?: CertificateConfig
 }
 
-type ServerHostConfig = {
+export type ServerHostConfig = {
     hostName?: string
     subdomain?: string
 }
