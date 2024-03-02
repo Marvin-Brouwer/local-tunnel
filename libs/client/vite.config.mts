@@ -1,9 +1,13 @@
-// @ts-ignore-next-line
-import packageConfig from './package.json' assert { type: 'json' };
-import path from 'path';
+/* eslint-disable import/no-extraneous-dependencies */
+
+import path from 'node:path';
+
 import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
-import { nodePolyfills } from 'vite-plugin-node-polyfills'
+import { EsLinter, linterPlugin } from 'vite-plugin-linter';
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
+
+import packageConfig from './package.json' assert { type: 'json' };
 
 const isDev = process.argv.join(' ').includes('--mode development');
 const srcFolder = path.resolve(__dirname, 'src');
@@ -12,18 +16,43 @@ const packageNameDefinition = packageConfig.name.split('/');
 const packageName = packageNameDefinition[1];
 const outputDir = 'dist';
 
-export default defineConfig({
+export default defineConfig((configEnv) => ({
 	plugins: [
-		nodePolyfills({
-		  include: [
-			'stream'
-		  ],
-		  protocolImports: true,
+		linterPlugin({
+			include: [
+				path.resolve(__dirname, './src/**/*.ts'),
+				path.resolve(__filename),
+			],
+			linters: [
+				new EsLinter({
+					configEnv,
+					serveOptions: {
+						clearCacheOnStart: true,
+						fix: true,
+					},
+					buildOptions: {
+						useEslintrc: true,
+						fix: isDev,
+					},
+				}),
+				// new TypeScriptLinter({
+				// 	configFilePath: path.resolve('./tsconfig.json')
+				// }),
+			],
+			build: {
+				includeMode: 'filesInFolder',
+			},
 		}),
-		dts({ 
-			entryRoot: srcFolder, 
-			outDir: path.join(outputDir, 'types')
-		})
+		nodePolyfills({
+			include: [
+				'stream',
+			],
+			protocolImports: true,
+		}),
+		dts({
+			entryRoot: srcFolder,
+			outDir: path.join(outputDir, 'types'),
+		}),
 	],
 	build: {
 		// https://github.com/vitejs/vite/issues/13926#issuecomment-1708536097
@@ -33,20 +62,20 @@ export default defineConfig({
 		sourcemap: true,
 		// This is to prevent issues with workspace files reading `*.d.ts` files.
 		emptyOutDir: !isDev,
-        rollupOptions: {
+		rollupOptions: {
 			external: [
-				/^node\:/
+				/^node:/,
 			],
 			output: {
 				compact: !isDev,
 				indent: isDev,
-			}
+			},
 		},
 		lib: {
-            formats: ['cjs', 'es', 'umd'],
+			formats: ['cjs', 'es', 'umd'],
 			entry,
 			name: packageName,
-			fileName: 'index'
-		}
-	}
-});
+			fileName: 'index',
+		},
+	},
+}));

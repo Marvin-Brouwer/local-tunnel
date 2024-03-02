@@ -1,0 +1,16 @@
+{
+    "editor.insertSpaces": false,
+    "editor.detectIndentation": false,
+	"eslint.alwaysShowStatus": true,
+    "eslint.format.enable": true,
+    "eslint.lintTask.enable": true,
+    "eslint.options": {
+        "parser": "@typescript-eslint/parser"
+    },
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "always"
+    },
+    "eslint.validate": [
+        "typescript"
+    ]
+}

@@ -1,10 +1,10 @@
 {
     "extends": "../../tsconfig.json",
     "compilerOptions": {
-        "outDir": "./lib"
-    },
-    "paths": {
-      "@local-tunnel/client": ["../client"],
+        "outDir": "./lib",
+		"paths": {
+		"@local-tunnel/client": ["../client"],
+		}
     },
     "include": [
         "./src/**/*.*",
