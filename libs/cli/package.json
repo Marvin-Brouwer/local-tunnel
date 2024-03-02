@@ -13,7 +13,7 @@
     "lt": "node ./lib/index.js",
     "build": "vite build",
     "build:production": "vite optimize && vite build --mode production",
-    "lint": "pnpm eslint -c ../../.eslintrc.js ./src/** ./vite.config.mts",
+    "lint": "pnpm eslint -c ../../.eslintrc.js ./src/** ./plugins/** ./vite.config.mts",
     "lint:fix": "pnpm lint --fix",
     "watch": "pnpm build --mode development --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
