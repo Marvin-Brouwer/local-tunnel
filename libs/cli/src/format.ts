@@ -1,6 +1,5 @@
 export default async () => {
 	// The direct import of chalk didn't work, so we make due
-	// todo maybe externalizing it?
 	const { default: chalk } = await import('chalk');
 
 	return {

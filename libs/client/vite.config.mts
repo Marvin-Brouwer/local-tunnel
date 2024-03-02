@@ -35,9 +35,6 @@ export default defineConfig((configEnv) => ({
 						fix: isDev,
 					},
 				}),
-				// new TypeScriptLinter({
-				// 	configFilePath: path.resolve('./tsconfig.json')
-				// }),
 			],
 			build: {
 				includeMode: 'filesInFolder',
