@@ -1,5 +1,9 @@
 # TODO
 
+## linter
+
+Auto fix linter
+
 ## Copy over contribution docs
 
 Copy over contribution docs and github templates from other projects.
