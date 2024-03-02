@@ -22,7 +22,7 @@ const getHttpsOptions = (command: Command) => {
 	};
 };
 
-async function callHttpsCommand(_:never, command: Command) {
+async function callHttpsCommand(_:unknown, command: Command) {
 	const {
 		localHost, remoteHost, subdomain, printRequestInfo, openUrlOnConnect,
 	} = getBaseOptions(command);

@@ -10,7 +10,7 @@ const applyHttpCommand = applyOptions(
 	applyEaseOfUseOptions,
 );
 
-async function callHttpCommand(_:never, command: Command) {
+async function callHttpCommand(_:unknown, command: Command) {
 	const {
 		localHost, remoteHost, subdomain, printRequestInfo, openUrlOnConnect,
 	} = getBaseOptions(command);

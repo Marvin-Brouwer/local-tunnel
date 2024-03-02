@@ -24,7 +24,11 @@ export default defineConfig((configEnv) => ({
 			],
 			linters: [
 				new EsLinter({
-					configEnv,
+					configEnv: {
+						...configEnv,
+						command: isDev ? 'serve' : 'build',
+						mode: isDev ? 'development' : 'production',
+					},
 					serveOptions: {
 						clearCacheOnStart: true,
 						fix: false,
@@ -39,12 +43,6 @@ export default defineConfig((configEnv) => ({
 				includeMode: 'filesInFolder',
 			},
 		}),
-		// nodePolyfills({
-		// 	include: [
-		// 		'stream',
-		// 	],
-		// 	protocolImports: true,
-		// }),
 		dts({
 			entryRoot: srcFolder,
 			outDir: path.join(outputDir, 'types'),
