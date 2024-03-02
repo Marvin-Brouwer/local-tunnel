@@ -69,6 +69,7 @@ export default defineConfig((configEnv) => ({
 				compact: !isDev,
 				indent: isDev,
 				inlineDynamicImports: true,
+				banner: '#!/usr/bin/env node \n\n',
 			},
 		},
 		lib: {
