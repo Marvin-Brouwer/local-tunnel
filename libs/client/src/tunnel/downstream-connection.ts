@@ -16,7 +16,7 @@ const createConnection = (tunnelConfig: TunnelConfig) => new Promise<Duplex>((re
 	const localSocketAddress: TcpSocketConnectOpts = {
 		host: tunnelConfig.localHost.host,
 		port: tunnelConfig.localHost.port === ''
-			? undefined
+			? undefined!
 			: +tunnelConfig.localHost.port,
 	};
 

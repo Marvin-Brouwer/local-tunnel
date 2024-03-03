@@ -7,6 +7,7 @@ import cp from 'node:child_process';
 import { type CertificateConfig, type TunnelConfig, createLocalTunnel } from '@local-tunnel/client';
 import { type Command } from 'commander';
 
+import * as format from '../format';
 import { validateCertificatePaths } from '../validators/pathValidator';
 
 // eslint-disable-next-line no-unused-vars
@@ -53,13 +54,9 @@ export const getBaseOptions = (command: Command) => {
 };
 
 export async function openLocalTunnel(printRequestInfo: boolean, openUrlOnConnect: boolean, config: TunnelConfig) {
-	const {
-		error, link, timestamp, password,
-	} = await import('../format').then((x) => x.default());
-
 	const tunnel = await createLocalTunnel(config)
 		.catch((err) => {
-			console.error(error(err));
+			console.error(format.error(err));
 			console.error();
 			process.exit(-1);
 		});
@@ -69,26 +66,26 @@ export async function openLocalTunnel(printRequestInfo: boolean, openUrlOnConnec
 			if (method === 'OPTIONS' && path === '/?keepalive') return;
 
 			const utcDate = new Date(Date.now());
-			console.info(timestamp(utcDate), method, path);
+			console.info(format.timestamp(utcDate), method, path);
 		});
 	}
 
 	tunnel.on('upstream-error', (err) => {
-		console.error(error(err));
+		console.error(format.error(err));
 		console.error();
 		close(-2);
 	});
 	tunnel.on('proxy-error', (err) => {
-		console.error(error(err));
+		console.error(format.error(err));
 		console.error();
 		close(-3);
 	});
 	tunnel.on('downstream-error', (err) => {
-		console.error(error(err));
+		console.error(format.error(err));
 	});
 
-	console.info(`tunneling ${link(tunnel.localAddress)} <> ${link(tunnel.url)}`);
-	if (tunnel.password) console.info(`password: ${password(tunnel.password)}`);
+	console.info(`tunneling ${format.link(tunnel.localAddress)} <> ${format.link(tunnel.url)}`);
+	if (tunnel.password) console.info(`password: ${format.password(tunnel.password)}`);
 
 	/**
      * `cachedUrl` is set when using a proxy server that support resource caching.
@@ -96,14 +93,14 @@ export async function openLocalTunnel(printRequestInfo: boolean, openUrlOnConnec
      * @see https://github.com/localtunnel/localtunnel/pull/319#discussion_r319846289
      */
 	if (tunnel.cachedUrl) {
-		console.info('cachedUrl:', link(tunnel.cachedUrl));
+		console.info('cachedUrl:', format.link(tunnel.cachedUrl));
 	}
 
 	await tunnel.open();
 	console.info();
 
 	if (openUrlOnConnect) {
-		console.info(`Opening ${link(tunnel.url)} in default browser...`);
+		console.info(`Opening ${format.link(tunnel.url)} in default browser...`);
 		openUrl(tunnel.url.toString());
 		console.info();
 	}

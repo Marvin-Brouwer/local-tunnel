@@ -1,12 +1,9 @@
-export default async () => {
-	// The direct import of chalk didn't work, so we make due
-	const { default: chalk } = await import('chalk');
+import chalk from 'chalk';
 
-	return {
-		link: (url: URL | string) => chalk.underline.blueBright(url.toString()),
-		error: (error: Error) => `${chalk.bold.red(error.name)}:\n  ${chalk.italic(`"${error.message}"`)}`,
-		timestamp: (dateTime: Date) => chalk.green(dateTime.toISOString()),
-		password: (password: string) => chalk.yellow.bold.italic(`'${password}'`),
-		italic: (value: string) => chalk.italic(value),
-	};
-};
+export const link = (url: URL | string) => chalk.underline.blueBright(url.toString());
+
+export const error = (err: Error) => `${chalk.bold.red(err.name)}:\n  ${chalk.italic(`"${err.message}"`)}`;
+
+export const timestamp = (dateTime: Date) => chalk.green(dateTime.toISOString());
+
+export const password = (pass: string) => chalk.yellow.bold.italic(`'${pass}'`);

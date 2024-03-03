@@ -5,6 +5,7 @@ import path from 'node:path';
 import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
 import { EsLinter, linterPlugin } from 'vite-plugin-linter';
+import requireTransform from 'vite-plugin-require-transform';
 
 import packageConfig from './package.json' assert { type: 'json' };
 
@@ -17,6 +18,7 @@ const outputDir = 'dist';
 
 export default defineConfig((configEnv) => ({
 	plugins: [
+		isDev ? requireTransform({ }) : undefined,
 		linterPlugin({
 			include: [
 				path.resolve(__dirname, './src/**/*.ts'),
@@ -64,10 +66,14 @@ export default defineConfig((configEnv) => ({
 		rollupOptions: {
 			external: [
 				/^node:/,
+				...(isDev ? ['debug'] : []),
+				'zod',
 			],
+			treeshake: !isDev,
 			output: {
 				compact: !isDev,
 				indent: isDev,
+				inlineDynamicImports: true,
 			},
 		},
 		lib: {

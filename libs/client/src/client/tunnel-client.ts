@@ -1,6 +1,7 @@
 import '../tunnel/transforms/header-host-transform';
 
-import { type Duplex, EventEmitter } from 'node:stream';
+import { EventEmitter } from 'node:events';
+import { type Duplex } from 'node:stream';
 
 import { type ClientConfig, type TunnelConfig, applyConfig } from './client-config';
 import { type TunnelEventEmitter, type TunnelEventListener } from '../errors/tunnel-events';
@@ -12,11 +13,11 @@ import { createUpstreamConnection } from '../tunnel/upstream-connection';
 export class TunnelClient {
 	#emitter: EventEmitter & TunnelEventEmitter;
 
-	#upstream: Duplex;
+	#upstream?: Duplex;
 
-	#fallback: Duplex;
+	#fallback?: Duplex;
 
-	#status: 'open' | 'closed' | 'connecting' | 'closing';
+	#status: 'open' | 'closed' | 'connecting' | 'closing' = 'closed';
 
 	public get status() {
 		return this.#status;
@@ -80,7 +81,7 @@ export class TunnelClient {
 			.pipe(this.#fallback)
 			.pipe(this.#upstream)
 			.on('close', () => {
-				if (this.#status !== 'closed' && !this.#upstream.destroyed) { this.#emitter.emit('tunnel-close'); }
+				if (this.#status !== 'closed' && !this.#upstream?.destroyed) { this.#emitter.emit('tunnel-close'); }
 			});
 
 		this.#fallback
@@ -103,14 +104,14 @@ export class TunnelClient {
 
 		await Promise.all([
 			// eslint-disable-next-line no-promise-executor-return
-			new Promise<void>((r) => this.#fallback.end(r)),
+			new Promise<void>((r) => this.#fallback?.end(r) ?? r()),
 			// eslint-disable-next-line no-promise-executor-return
-			new Promise<void>((r) => this.#upstream.end(r)),
+			new Promise<void>((r) => this.#upstream?.end(r) ?? r()),
 		]);
-		if (!this.#upstream.destroyed) { this.#emitter.emit('tunnel-closed'); }
+		if (!this.#upstream?.destroyed) { this.#emitter.emit('tunnel-closed'); }
 
-		this.#fallback.destroy();
-		this.#upstream.destroy();
+		this.#fallback?.destroy();
+		this.#upstream?.destroy();
 
 		this.#status = 'closed';
 

@@ -1,3 +1,4 @@
+import chalk from 'chalk';
 import { type Command } from 'commander';
 
 import {
@@ -56,8 +57,6 @@ export function mapHttpsArgument(arg: string) {
 }
 
 export async function registerHttps(program: Command) {
-	const { italic } = await import('../format').then((x) => x.default());
-
 	applyHttpsCommand(program
 		.command('https')
 		.name('https://<origin>')
@@ -73,7 +72,7 @@ export async function registerHttps(program: Command) {
 			/* eslint-enable max-len */
 		})
 		.description(
-			`Open a local-tunnel to a https endpoint ${italic('(lt help https)')}`,
+			`Open a local-tunnel to a https endpoint ${chalk.italic('(lt help https)')}`,
 		)
 		.addOption(program
 			.createOption('--origin <origin>')

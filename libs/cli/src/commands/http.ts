@@ -1,3 +1,4 @@
+import chalk from 'chalk';
 import { type Command } from 'commander';
 
 import {
@@ -37,8 +38,6 @@ export function mapHttpArgument(arg: string) {
 }
 
 export async function registerHttp(program: Command) {
-	const { italic } = await import('../format').then((x) => x.default());
-
 	applyHttpCommand(program
 		.command('http')
 		.name('http://<origin>')
@@ -52,7 +51,7 @@ export async function registerHttp(program: Command) {
 			},
 		})
 		.description(
-			`Open a local-tunnel to a http endpoint ${italic('(lt help http)')}`,
+			`Open a local-tunnel to a http endpoint ${chalk.italic('(lt help http)')}`,
 		)
 		.addOption(program
 			.createOption('--origin <origin>')

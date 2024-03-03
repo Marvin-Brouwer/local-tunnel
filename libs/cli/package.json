@@ -2,15 +2,15 @@
 	"name": "@local-tunnel/cli",
 	"version": "3.0.0-alpha.1",
 	"description": "Command line interface for @local-tunnel/client",
-	"main": "./dist/index.js",
+	"main": "./dist/index.mjs",
 	"bin": {
-		"lf": "./lib/index.js",
-		"localtunnel": "./lib/index.js",
-		"local-tunnel": "./lib/index.js"
+		"lf": "./lib/index.mjs",
+		"localtunnel": "./lib/index.mjs",
+		"local-tunnel": "./lib/index.mjs"
 	},
 	"exports": {
 	  ".": {
-		"npx": "./dist/index.js"
+		"npx": "./dist/index.mjs"
 	  }
 	},
 	"scripts": {
@@ -20,7 +20,7 @@
 		"lt:ext:8080": "pnpm lt http://localhost:8080 --subdomain 8080 --print-requests",
 		"lt:ext:8008": "pnpm lt http://localhost:8008 --subdomain 8008 --print-requests",
 		"lt:ext:astro": "pnpm lt https://localhost:4321 -skip-cert-val --subdomain astro --print-requests",
-		"lt": "node ./lib/index.js",
+		"lt": "node ./lib/index.mjs",
 		"build": "vite build",
 		"build:production": "vite optimize && vite build --mode production",
 		"lint": "pnpm eslint -c ../../.eslintrc.js ./src/** ./plugins/** ./vite.config.mts",
@@ -43,6 +43,7 @@
 		"rollup": "^4.12.0",
 		"vite": "^5.1.4",
 		"vite-plugin-linter": "^2.1.1",
-		"vite-plugin-node-polyfills": "^0.21.0"
+		"vite-plugin-node-polyfills": "^0.21.0",
+		"debug": "^4.3.4"
 	}
 }

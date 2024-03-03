@@ -67,6 +67,7 @@ export default defineConfig((configEnv) => ({
 			external: [
 				'@local-tunnel/client',
 				'chalk',
+				'debug',
 				/^node:/,
 			],
 			treeshake: true,
@@ -78,7 +79,7 @@ export default defineConfig((configEnv) => ({
 			},
 		},
 		lib: {
-			formats: ['cjs'],
+			formats: ['es'],
 			entry,
 			name: packageName,
 			fileName: () => 'lt.js',

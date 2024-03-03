@@ -58,7 +58,7 @@ const createHost = (tunnelConfig: TunnelConfig, tunnelLease: TunnelLease, emitte
 		.replaceAll('${address}', format.localAddress(tunnelConfig));
 
 	const fallbackHost = createServer(async (request, response) => {
-		const urlParts = request.url.split('?');
+		const urlParts = request.url!.split('?');
 		const unsafePath = decodeURI(urlParts[0]);
 		const keepalive = urlParts.length !== 0 && urlParts[1] === 'keepalive';
 		const urlPath = posix.normalize(unsafePath);

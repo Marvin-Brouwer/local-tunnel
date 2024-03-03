@@ -1,5 +1,6 @@
 import { type AddressInfo } from 'node:net';
 
+// eslint-disable-next-line import/no-extraneous-dependencies
 import { type Debugger } from 'debug';
 
 import { type TunnelConfig } from './client/client-config';
@@ -7,27 +8,26 @@ import { type TunnelLease } from './tunnel/tunnel-lease';
 
 // eslint-disable-next-line no-unused-vars
 type LoggerFactory = (namespace: string) => Pick<Debugger, 'enabled' |'log'>;
-let loggerFactory: LoggerFactory = () => ({
+const fallbackLoggerFactory = (): LoggerFactory => () => ({
 	enabled: false,
 	log: () => { },
 });
 
-if (import.meta.env.VITE_DEBUG) {
-	// eslint-disable-next-line global-require, @typescript-eslint/no-var-requires
-	const debug = require('debug');
+export const createLogger = (namespace: string) => {
+	if (import.meta.env.VITE_DEBUG === 'false') {
+		return fallbackLoggerFactory()(namespace) as Debugger;
+	}
+
+	// eslint-disable-next-line global-require, @typescript-eslint/no-var-requires, import/no-extraneous-dependencies
+	const { debug } = require('debug');
+
 	debug.enable(import.meta.env.VITE_DEBUG);
-
-	loggerFactory = (namespace: string) => {
-		const logger = debug(namespace);
-
-		return {
-			enabled: logger.enabled,
-			log: logger,
-		};
+	const logger = debug(namespace);
+	return {
+		log: logger,
+		enabled: logger.enabled,
 	};
-}
-
-export const createLogger = loggerFactory;
+};
 
 function isAddressInfo(addressInfo: AddressInfo | string): addressInfo is AddressInfo {
 	return addressInfo.constructor.name === 'AddressInfo';
