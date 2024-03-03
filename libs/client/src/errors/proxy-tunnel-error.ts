@@ -26,7 +26,7 @@ export abstract class ProxyTunnelError extends LocalTunnelError {
  * Error indicating the `proxy` tunnel rejected connection.
  *
  * **Note:** Since the `proxy` is hosted on your local environment, these errors should be scarce.
- * If you encounter any, please report a bug at {@link https://github.com/Marvin-Brouwer/local-tunnel/issues}
+ * If you encounter any, please report a bug at {@link https://github.com/Marvin-Brouwer/local-tunnel/issues/new?assignees=&labels=bug&template=socket-error.md&title=}
  */
 export class ProxyTunnelRejectedError extends LocalTunnelError {
 	public static isProxyTunnelRejectedError(error: Error): error is ProxyTunnelRejectedError {
@@ -51,7 +51,7 @@ export class ProxyTunnelRejectedError extends LocalTunnelError {
  * Error indicating the `proxy` tunnel or host had an unexpected error.
  *
  * **Note:** We like to keep the unexpected errors to a minimum.
- * If you encounter any, please report a bug at {@link https://github.com/Marvin-Brouwer/local-tunnel/issues}
+ * If you encounter any, please report a bug at {@link https://github.com/Marvin-Brouwer/local-tunnel/issues/new?assignees=&labels=bug&template=unexpected-error.md&title=}
  */
 export class UnknownProxyTunnelError extends LocalTunnelError {
 	public static isUnknownProxyTunnelError(error: Error): error is UnknownProxyTunnelError {

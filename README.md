@@ -14,8 +14,8 @@
 [repo-stars-shield]: https://img.shields.io/github/stars/Marvin-Brouwer/local-tunnel.svg?color=brightgreen&style=flat-square
 [license-url]: /LICENSE
 [license-shield]: https://img.shields.io/badge/license-MIT-gold.svg?style=flat-square
-[repo-releasenotes-url]: /CHANGELOG.md
-[repo-releasenotes-shield]: https://img.shields.io/badge/Release_notes-gray.svg?style=flat-square
+[repo-lt-url]: https://github.com/localtunnel/localtunnel
+[repo-lt-shield]: https://img.shields.io/badge/Forked_from-localtunnel-lightgray?style=flat-square&logo=github
 
 [discord-url]: https://discord.gg/fkw3Tmyu
 [discord-shield]: https://img.shields.io/discord/958295823001722890?label=discord&logo=discord&style=flat-square
@@ -33,7 +33,7 @@
 |:---	|:---	|
 | [![Client repo folder][package-shield-i-client]](./libs/client#readme) | [![Client version][package-shield-v-client] ![Client downloads][package-shield-d-client]][package-shield-u-client] |
   
-| [![Stars][repo-stars-shield]][repo-stars-url] | [![License][license-shield]][license-url] | [![Release notes][repo-releasenotes-shield]][repo-releasenotes-url] | [![Discord][discord-shield]][discord-url] |
+| [![Stars][repo-stars-shield]][repo-stars-url] | [![License][license-shield]][license-url] | [![Original repo][repo-lt-shield]][repo-lt-url] | [![Discord][discord-shield]][discord-url] |
 |:---	|:---	|:---	|:---	|
 
 </h3>
@@ -101,4 +101,4 @@ Next, run `pnpm watch` on the project root, and all workspaces will start watchi
 
 Individual libraries will have documented cli commands to host and test the tunnel.  
 For setting up a local server see: [~/libs/server](./libs/server/Readme.md).  
-For connecting to a local-tunnel server see: [~/libs/server](./libs/cli/Readme.md).  
+For connecting to a local-tunnel server see: [~/libs/cli](./libs/cli/Readme.md).  
