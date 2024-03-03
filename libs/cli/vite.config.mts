@@ -3,7 +3,7 @@
 import path from 'path';
 
 import { defineConfig } from 'vite';
-import { EsLinter, linterPlugin } from 'vite-plugin-linter';
+import eslintPlugin from 'vite-plugin-eslint';
 
 import packageConfig from './package.json' assert { type: 'json' };
 import serveDummy from './plugins/dummy-server';
@@ -16,32 +16,18 @@ const outputDir = 'lib';
 
 export default defineConfig((configEnv) => ({
 	plugins: [
-		linterPlugin({
-			include: [
-				path.resolve(__dirname, './src/**/*.ts'),
-				path.resolve(__filename),
-			],
-			linters: [
-				new EsLinter({
-					configEnv: {
-						...configEnv,
-						command: isDev ? 'serve' : 'build',
-						mode: isDev ? 'development' : 'production',
-					},
-					serveOptions: {
-						clearCacheOnStart: true,
-						fix: false,
-					},
-					buildOptions: {
-						useEslintrc: true,
-						fix: false,
-					},
-				}),
-			],
-			build: {
-				includeMode: 'filesInFolder',
-			},
-		}),
+		{
+			...eslintPlugin({
+				failOnWarning: false,
+				failOnError: !isDev,
+				useEslintrc: true,
+				fix: isDev,
+				errorOnUnmatchedPattern: !isDev,
+				globInputPaths: true,
+				overrideConfigFile: path.resolve(__dirname, '../../.eslintrc.js'),
+			}),
+			enforce: 'post',
+		},
 		serveDummy({
 			configEnv: {
 				...configEnv,
@@ -76,6 +62,9 @@ export default defineConfig((configEnv) => ({
 				indent: isDev,
 				inlineDynamicImports: true,
 				banner: '#!/usr/bin/env node \n\n',
+				interop: 'compat',
+				hashCharacters: 'hex',
+				globals: (name) => name,
 			},
 		},
 		lib: {

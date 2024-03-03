@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
-import { EsLinter, linterPlugin } from 'vite-plugin-linter';
+import eslintPlugin from 'vite-plugin-eslint';
 import requireTransform from 'vite-plugin-require-transform';
 
 import packageConfig from './package.json' assert { type: 'json' };
@@ -16,35 +16,21 @@ const packageNameDefinition = packageConfig.name.split('/');
 const packageName = packageNameDefinition[1];
 const outputDir = 'dist';
 
-export default defineConfig((configEnv) => ({
+export default defineConfig({
 	plugins: [
-		isDev ? requireTransform({ }) : undefined,
-		linterPlugin({
-			include: [
-				path.resolve(__dirname, './src/**/*.ts'),
-				path.resolve(__filename),
-			],
-			linters: [
-				new EsLinter({
-					configEnv: {
-						...configEnv,
-						command: isDev ? 'serve' : 'build',
-						mode: isDev ? 'development' : 'production',
-					},
-					serveOptions: {
-						clearCacheOnStart: true,
-						fix: false,
-					},
-					buildOptions: {
-						useEslintrc: true,
-						fix: false,
-					},
-				}),
-			],
-			build: {
-				includeMode: 'filesInFolder',
-			},
-		}),
+		isDev ? requireTransform({}) : undefined,
+		{
+			...eslintPlugin({
+				failOnWarning: false,
+				failOnError: !isDev,
+				useEslintrc: true,
+				fix: isDev,
+				errorOnUnmatchedPattern: !isDev,
+				globInputPaths: true,
+				overrideConfigFile: path.resolve(__dirname, '../../.eslintrc.js'),
+			}),
+			enforce: 'post',
+		},
 		dts({
 			entryRoot: srcFolder,
 			outDir: path.join(outputDir, 'types'),
@@ -63,11 +49,6 @@ export default defineConfig((configEnv) => ({
 		sourcemap: true,
 		// This is to prevent issues with workspace files reading `*.d.ts` files.
 		emptyOutDir: !isDev,
-		terserOptions: {
-			keep_classnames: true,
-			keep_fnames: true,
-			sourceMap: true,
-		},
 		rollupOptions: {
 			external: [
 				/^node:/,
@@ -76,9 +57,12 @@ export default defineConfig((configEnv) => ({
 			],
 			treeshake: !isDev,
 			output: {
+				esModule: true,
+				hashCharacters: 'hex',
 				compact: !isDev,
 				indent: isDev,
 				inlineDynamicImports: true,
+				globals: (name) => name,
 			},
 		},
 		lib: {
@@ -88,4 +72,4 @@ export default defineConfig((configEnv) => ({
 			fileName: 'index',
 		},
 	},
-}));
+});
