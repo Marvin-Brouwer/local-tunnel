@@ -17,6 +17,8 @@ export class TunnelClient {
 
 	#fallback?: Duplex;
 
+	#abortController: AbortController;
+
 	#status: 'open' | 'closed' | 'connecting' | 'closing' = 'closed';
 
 	public get status() {
@@ -50,6 +52,8 @@ export class TunnelClient {
 		this.#emitter = new EventEmitter({
 			captureRejections: true,
 		}) as EventEmitter & TunnelEventEmitter;
+
+		this.#abortController = new AbortController();
 	}
 
 	public async open(): Promise<this> {
@@ -64,13 +68,14 @@ export class TunnelClient {
 			return this;
 		}
 
+		this.#abortController = new AbortController();
 		this.#status = 'connecting';
-		this.#fallback = await createProxyConnection(this.tunnelConfig, this.tunnelLease, this.#emitter);
+		this.#fallback = await createProxyConnection(this.tunnelConfig, this.tunnelLease, this.#emitter, this.#abortController.signal);
 		this.#fallback.pause();
 
 		this.#emitter.setMaxListeners(this.tunnelLease.maximumConnections);
 
-		this.#upstream = await createUpstreamConnection(this.tunnelLease, this.#emitter);
+		this.#upstream = await createUpstreamConnection(this.tunnelLease, this.#emitter, this.#abortController.signal);
 		this.#upstream
 			.transformHeaderHost(this.tunnelConfig)
 			.on('data', (chunk: Buffer) => {
@@ -101,6 +106,7 @@ export class TunnelClient {
 		}
 
 		this.#status = 'closing';
+		this.#abortController.abort('closing connection');
 
 		await Promise.all([
 			// eslint-disable-next-line no-promise-executor-return

@@ -50,7 +50,7 @@ const formatError = (error: Error | SocketError) => JSON.stringify({
 }, null, 2).replaceAll('\\n', ' ');
 
 // eslint-disable-next-line max-len
-const createHost = (tunnelConfig: TunnelConfig, tunnelLease: TunnelLease, emitter: TunnelEventEmitter) => new Promise<Server>((resolve) => {
+const createHost = (tunnelConfig: TunnelConfig, tunnelLease: TunnelLease, emitter: TunnelEventEmitter, abortSignal: AbortSignal) => new Promise<Server>((resolve) => {
 	if (hostLogger.enabled) hostLogger.log('establishing proxy host');
 
 	const unavailableResponse = htmlResponse
@@ -78,6 +78,7 @@ const createHost = (tunnelConfig: TunnelConfig, tunnelLease: TunnelLease, emitte
 				body,
 				referrer: request.headers.referer,
 				redirect: 'manual',
+				signal: abortSignal,
 				headers: {
 					...mapHeaders(request.rawHeaders),
 					'x-forwarded-host': tunnelLease.cachedTunnelUrl?.host ?? tunnelLease.tunnelUrl.host,
@@ -149,7 +150,7 @@ const createHost = (tunnelConfig: TunnelConfig, tunnelLease: TunnelLease, emitte
 		return response.end();
 	});
 
-	fallbackHost.listen({ port: 0 }, () => {
+	fallbackHost.listen({ port: 0, signal: abortSignal }, () => {
 		if (connectionLogger.enabled) {
 			connectionLogger.log('fallback host funning on http:%s', format.address(fallbackHost.address()!));
 		}
@@ -159,7 +160,7 @@ const createHost = (tunnelConfig: TunnelConfig, tunnelLease: TunnelLease, emitte
 });
 
 // eslint-disable-next-line max-len
-const createConnection = (address: AddressInfo, emitter: TunnelEventEmitter) => new Promise<Duplex>((resolve) => {
+const createConnection = (address: AddressInfo, emitter: TunnelEventEmitter, abortSignal: AbortSignal) => new Promise<Duplex>((resolve) => {
 	if (connectionLogger.enabled) {
 		connectionLogger.log('establishing remote connection to http:%s', format.address(address));
 	}
@@ -170,6 +171,7 @@ const createConnection = (address: AddressInfo, emitter: TunnelEventEmitter) => 
 			port: address.port,
 			allowHalfOpen: true,
 			keepAlive: true,
+			signal: abortSignal,
 		});
 
 	const mapError = (error: SocketError) => {
@@ -208,10 +210,10 @@ const createConnection = (address: AddressInfo, emitter: TunnelEventEmitter) => 
 });
 
 // eslint-disable-next-line max-len
-export const createProxyConnection = async (tunnelConfig: TunnelConfig, tunnelLease: TunnelLease, emitter: TunnelEventEmitter) => {
-	const host = await createHost(tunnelConfig, tunnelLease, emitter);
+export const createProxyConnection = async (tunnelConfig: TunnelConfig, tunnelLease: TunnelLease, emitter: TunnelEventEmitter, abortSignal: AbortSignal) => {
+	const host = await createHost(tunnelConfig, tunnelLease, emitter, abortSignal);
 	const address = (host.address() as AddressInfo);
-	const connection = await createConnection(address, emitter);
+	const connection = await createConnection(address, emitter, abortSignal);
 
 	return connection;
 };
