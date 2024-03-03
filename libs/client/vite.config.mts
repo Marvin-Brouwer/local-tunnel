@@ -63,6 +63,11 @@ export default defineConfig((configEnv) => ({
 		sourcemap: true,
 		// This is to prevent issues with workspace files reading `*.d.ts` files.
 		emptyOutDir: !isDev,
+		terserOptions: {
+			keep_classnames: true,
+			keep_fnames: true,
+			sourceMap: true,
+		},
 		rollupOptions: {
 			external: [
 				/^node:/,
