@@ -51,6 +51,11 @@ export default defineConfig((configEnv) => ({
 			port: 8080,
 		}),
 	],
+	// We need the exceptions to not mangle their names
+	esbuild: {
+		minifyIdentifiers: false,
+		keepNames: true,
+	},
 	build: {
 		minify: !isDev,
 		target: ['ESNext'],
