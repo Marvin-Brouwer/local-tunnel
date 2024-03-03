@@ -1,6 +1,7 @@
 {
     "editor.insertSpaces": false,
     "editor.detectIndentation": false,
+	"editor.renderWhitespace": "boundary",
 	"eslint.alwaysShowStatus": true,
     "eslint.format.enable": true,
     "eslint.lintTask.enable": true,
@@ -12,5 +13,33 @@
     },
     "eslint.validate": [
         "typescript"
-    ]
+    ],
+	"files.trimTrailingWhitespace": true,
+	"files.trimFinalNewlines": true,
+	"files.eol": "\n",
+	"[markdown]": {
+		"files.trimTrailingWhitespace": false,
+		"editor.trimAutoWhitespace": false,
+		"editor.renderWhitespace": "all"
+	},
+	"[md]": {
+		"files.trimTrailingWhitespace": false,
+		"editor.trimAutoWhitespace": false,
+		"editor.renderWhitespace": "all"
+	},
+	"[yaml]": {
+		"editor.insertSpaces": true,
+		"editor.detectIndentation": true,
+		"editor.renderWhitespace": "all",
+		"editor.tabSize": 2
+	},
+	"markdownlint.config": {
+		"no-inline-html": false,
+		"no-hard-tabs": false,
+		"no-trailing-spaces": {
+			"br_spaces": 2
+		}
+	},
+	"markdown.preview.breaks": true,
+
 }

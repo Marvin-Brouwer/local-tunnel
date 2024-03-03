@@ -1,9 +1,42 @@
+[//]: # (Header)
+
+[package-spacer]: https://img.shields.io/badge/--transparent?style=flat-square&color=rgba(0%2C0%2C0%2C0)
+
+[package-shield-u-cli]: https://www.npmjs.com/package/@local-tunnel/cli/
+[package-shield-i-cli]: https://img.shields.io/badge/cli-lightgray?style=flat-square&label=%40local-tunnel&labelColor=gray&color=lightgray
+[package-shield-v-cli]: https://img.shields.io/npm/v/%40local-tunnel%2Fcli?style=flat-square
+[package-shield-d-cli]: https://img.shields.io/npm/dt/%40local-tunnel%2Fcli?style=flat-square
+
+[package-shield-u-client]: https://www.npmjs.com/package/@local-tunnel/client/
+[package-shield-i-client]: https://img.shields.io/badge/client-lightgray?style=flat-square&label=%40local-tunnel&labelColor=gray&color=lightgray
+[package-shield-v-client]: https://img.shields.io/npm/v/%40local-tunnel%2Fclient?style=flat-square
+[package-shield-d-client]: https://img.shields.io/npm/dt/%40local-tunnel%2Fclient?style=flat-square
+
+[repo-stars-url]: https://github.com/Marvin-Brouwer/local-tunnel/stargazers
+[repo-stars-shield]: https://img.shields.io/github/stars/Marvin-Brouwer/local-tunnel.svg?color=brightgreen&style=flat-square
+[license-url]: /LICENSE
+[license-shield]: https://img.shields.io/badge/license-MIT-gold.svg?style=flat-square
+[repo-releasenotes-url]: /CHANGELOG.md
+[repo-releasenotes-shield]: https://img.shields.io/badge/Release_notes-gray.svg?style=flat-square
+
+[discord-url]: https://discord.gg/fkw3Tmyu
+[discord-shield]: https://img.shields.io/discord/958295823001722890?label=discord&logo=discord&style=flat-square
+
 # `@local-tunnel/*`
 
 > [!NOTE]  
 > This library is forked from [`localtunnel/localtunnel`](https://github.com/localtunnel/localtunnel).  
 > We do not own any rights to [localtunnel.me](https://localtunnel.me), nor do we have any influence on their server implementation.  
 > Please refer to [`localtunnel/server`](https://github.com/localtunnel/server) for any concerns or problems you have with connecting or otherwise using [localtunnel.me](https://localtunnel.me).
+
+<h3>
+
+[![CLI][package-shield-i-cli]](./libs/cli) ![text-spacer][package-spacer] [![CLI version][package-shield-v-cli]![CLI downloads][package-shield-d-cli]][package-shield-u-cli]  
+[![Client][package-shield-i-client]](./libs/client) [![Client version][package-shield-v-client]![Client downloads][package-shield-d-client]][package-shield-u-client]  
+
+[![Stars][repo-stars-shield]][repo-stars-url] [![License][license-shield]][license-url] [![Release notes][repo-releasenotes-shield]][repo-releasenotes-url] [![Discord][discord-shield]][discord-url]
+</h3>
+<hr/>
 
 `@local-tunnel` exposes your localhost to the world for easy testing and sharing!  
 No need to mess with DNS or deploy just to have others test out your changes.
