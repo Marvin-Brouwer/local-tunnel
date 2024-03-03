@@ -30,7 +30,8 @@ export const createLogger = (namespace: string) => {
 };
 
 function isAddressInfo(addressInfo: AddressInfo | string): addressInfo is AddressInfo {
-	return addressInfo.constructor.name === 'AddressInfo';
+	// Apparently, the AddressInfo is an Object and not a class, wo we check it to be not a String
+	return addressInfo.constructor !== String;
 }
 
 export const format = {

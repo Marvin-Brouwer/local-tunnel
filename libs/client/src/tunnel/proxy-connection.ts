@@ -120,7 +120,7 @@ const createHost = (tunnelConfig: TunnelConfig, tunnelLease: TunnelLease, emitte
 					return response.end();
 				});
 		} catch (error) {
-			const unknownError = new UnknownDownstreamTunnelError(tunnelConfig, error);
+			const unknownError = new UnknownDownstreamTunnelError(tunnelConfig, error as Error);
 
 			if (connectionLogger.enabled) {
 				connectionLogger.log('unknown error occurred while forwarding request %j', unknownError);
@@ -151,7 +151,7 @@ const createHost = (tunnelConfig: TunnelConfig, tunnelLease: TunnelLease, emitte
 
 	fallbackHost.listen({ port: 0 }, () => {
 		if (connectionLogger.enabled) {
-			connectionLogger.log('fallback host funning on http:%s', format.address(fallbackHost.address()));
+			connectionLogger.log('fallback host funning on http:%s', format.address(fallbackHost.address()!));
 		}
 
 		resolve(fallbackHost);
