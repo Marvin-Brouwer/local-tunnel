@@ -1,7 +1,5 @@
 [//]: # (Header)
 
-[package-spacer]: https://img.shields.io/badge/--transparent?style=flat-square&color=rgba(0%2C0%2C0%2C0)
-
 [package-shield-u-cli]: https://www.npmjs.com/package/@local-tunnel/cli/
 [package-shield-i-cli]: https://img.shields.io/badge/cli-lightgray?style=flat-square&label=%40local-tunnel&labelColor=gray&color=lightgray
 [package-shield-v-cli]: https://img.shields.io/npm/v/%40local-tunnel%2Fcli?style=flat-square
@@ -31,10 +29,13 @@
 
 <h3>
 
-[![CLI][package-shield-i-cli]](./libs/cli) ![text-spacer][package-spacer] [![CLI version][package-shield-v-cli]![CLI downloads][package-shield-d-cli]][package-shield-u-cli]  
-[![Client][package-shield-i-client]](./libs/client) [![Client version][package-shield-v-client]![Client downloads][package-shield-d-client]][package-shield-u-client]  
+| [![CLI repo folder][package-shield-i-cli]](./libs/cli#readme)  				| [![CLI version][package-shield-v-cli] ![CLI downloads][package-shield-d-cli]][package-shield-u-cli] |
+|:---	|:---	|
+| [![Client repo folder][package-shield-i-client]](./libs/client#readme) | [![Client version][package-shield-v-client] ![Client downloads][package-shield-d-client]][package-shield-u-client] |
+  
+| [![Stars][repo-stars-shield]][repo-stars-url] | [![License][license-shield]][license-url] | [![Release notes][repo-releasenotes-shield]][repo-releasenotes-url] | [![Discord][discord-shield]][discord-url] |
+|:---	|:---	|:---	|:---	|
 
-[![Stars][repo-stars-shield]][repo-stars-url] [![License][license-shield]][license-url] [![Release notes][repo-releasenotes-shield]][repo-releasenotes-url] [![Discord][discord-shield]][discord-url]
 </h3>
 <hr/>
 
@@ -66,22 +67,28 @@ Furthermore, you'll have to get a paid subscription on [`ngrok`](https://ngrok.c
 
 To create a tunnel locally run any of the following commands, depending on your package manager of choice.  
 
-```txt
-> npx @localtunnel/cli help
+```console
+npx @local-tunnel/cli help
 ```
 
-```txt
-> pnpm dlx @localtunnel/cli help
+```console
+pnpm dlx @local-tunnel/cli help
 ```
 
-```txt
-> yarn dlx @localtunnel/cli help
+```console
+yarn dlx @local-tunnel/cli help
 ```
 
 If you'd like, `@localtunnel/cli` can also be installed globally, or as a package dependency, after which you can invoke the CLI by running:  
 
-```txt
-> local-tunnel help
+```console
+local-tunnel help
+```
+
+or:
+
+```console
+lt help
 ```
 
 The CLI help is pretty comprehensive so no online docs are included for the CLI tool.  
