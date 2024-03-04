@@ -6,10 +6,27 @@ Our package's security policy.
 
 Currently, these versions are supported with security updates:
 
+### `@local-tunnel/cli`
+
 | Version    | Supported                |
 | ---------: | ------------------------ |
 | `^3.0.0`   | :heavy_check_mark:       |
 | `>= 2.*.*` | :heavy_multiplication_x: |
+
+> The versions below version `3` do not exist, due to this library being forked from version `2` prior to the rebuild.  
+
+### `@local-tunnel/client`
+
+| Version    | Supported                |
+| ---------: | ------------------------ |
+| `^3.0.0`   | :heavy_check_mark:       |
+| `>= 2.*.*` | :heavy_multiplication_x: |
+
+> The versions below version `3` do not exist, due to this library being forked from version `2` prior to the rebuild.  
+
+### `@local-tunnel/server`
+
+***Currently, not under support.***
 
 > The versions below version `3` do not exist, due to this library being forked from version `2` prior to the rebuild.  
 
