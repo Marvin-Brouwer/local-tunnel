@@ -37,6 +37,15 @@
 |:---	|:---	|:---	|:---	|
 
 </h3>
+
+[//]: # (TOC)
+
+<h3 aria-label="Table of contents">
+
+[Quick start](#quick-start) - [Contributing](#contributing)
+
+</h3>
+
 <hr/>
 
 `@local-tunnel` exposes your localhost to the world for easy testing and sharing!  
@@ -93,7 +102,19 @@ lt help
 
 The CLI help is pretty comprehensive so no online docs are included for the CLI tool.  
 
-## Development
+## Contributing
+
+TODO Contributing summary
+
+### Project structure
+
+- [`@local-tunnel/cli`](./libs/cli/#readme)
+- [`@local-tunnel/client`](./libs/client/#readme)
+- [`@local-tunnel/server`](./libs/server/#readme)
+
+### Branching
+
+### Developing
 
 The solution is setup to watch with a single command.  
 To get started, run `pnpm i` on the project root.  
@@ -102,3 +123,7 @@ Next, run `pnpm watch` on the project root, and all workspaces will start watchi
 Individual libraries will have documented cli commands to host and test the tunnel.  
 For setting up a local server see: [~/libs/server](./libs/server/Readme.md).  
 For connecting to a local-tunnel server see: [~/libs/cli](./libs/cli/Readme.md).  
+
+### Planning a new release
+
+TODO
