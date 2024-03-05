@@ -21,14 +21,10 @@ const isYarnDlx = (executionPath: string) => (
 );
 
 /**
- * Since we support dlx, global install, and normal dependency install,
- * we reflect back the command used in the help sceen.
+ * Since we run via dlx,we reflect back the command used in the help sceen.
 */
 const getName = () => {
-	// TODO: Remove once tested
 	const executionPath = new URL(import.meta.url).pathname.toLowerCase();
-	// eslint-disable-next-line
-	console.log(executionPath);
 	if (isNpmDlx(executionPath)) return `npx ${packageConfig.name}`;
 	if (isPnpmDlx(executionPath)) return `pnpm dlx ${packageConfig.name}`;
 	if (isYarnDlx(executionPath)) return `yarn dlx ${packageConfig.name}`;
@@ -36,8 +32,10 @@ const getName = () => {
 	return 'lt';
 };
 
+const commandName = getName();
+
 program
-	.name(getName())
+	.name(commandName)
 	.description(packageConfig.description)
 	.allowExcessArguments(false)
 	.allowUnknownOption(false)
@@ -46,8 +44,8 @@ program
 
 // No top level async allowed for commonJs
 Promise.resolve()
-	.then(() => registerHttp(program))
-	.then(() => registerHttps(program))
+	.then(() => registerHttp(program, commandName))
+	.then(() => registerHttps(program, commandName))
 /**
      * This function exists to make the cli framework distinguish between http and https,
      * Without having to compromise on typing urls

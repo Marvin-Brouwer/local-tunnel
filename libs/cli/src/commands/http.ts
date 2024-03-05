@@ -37,7 +37,7 @@ export function mapHttpArgument(arg: string) {
 	return arg;
 }
 
-export async function registerHttp(program: Command) {
+export async function registerHttp(program: Command, mainCommandName: string) {
 	applyHttpCommand(program
 		.command('http')
 		.name('http://<origin>')
@@ -50,7 +50,7 @@ export async function registerHttp(program: Command) {
                 + '                              E.g. "http://localhost:8080"';
 			}
 		})
-		.description(`Open a local-tunnel to a http endpoint ${chalk.italic('(lt help http)')}`)
+		.description(`Open a local-tunnel to a http endpoint ${chalk.italic(`(${mainCommandName} help http)`)}`)
 		.addOption(program
 			.createOption('--origin <origin>')
 			.makeOptionMandatory()

@@ -58,7 +58,7 @@ export function mapHttpsArgument(arg: string) {
 	return arg;
 }
 
-export async function registerHttps(program: Command) {
+export async function registerHttps(program: Command, mainCommandName: string) {
 	applyHttpsCommand(program
 		.command('https')
 		.name('https://<origin>')
@@ -73,7 +73,7 @@ export async function registerHttps(program: Command) {
 			}
 			/* eslint-enable max-len */
 		})
-		.description(`Open a local-tunnel to a https endpoint ${chalk.italic('(lt help https)')}`)
+		.description(`Open a local-tunnel to a https endpoint ${chalk.italic(`(${mainCommandName} help https)`)}`)
 		.addOption(program
 			.createOption('--origin <origin>')
 			.makeOptionMandatory()
