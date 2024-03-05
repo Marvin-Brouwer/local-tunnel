@@ -70,7 +70,7 @@ const createHost = (
 			? new URLSearchParams()
 			: new URLSearchParams(urlParts[1]);
 
-		if (request.method === 'OPTIONS' && keepalive) {
+		if (request.method === 'OPTION' && keepalive) {
 			return response.end();
 		}
 

@@ -1,6 +1,6 @@
 import '../tunnel/transforms/header-host-transform';
 
-import { EventEmitter } from 'node:events';
+import { EventEmitter, setMaxListeners } from 'node:events';
 import { type Duplex } from 'node:stream';
 
 import { type ClientConfig, type TunnelConfig, applyConfig } from './client-config';
@@ -76,6 +76,7 @@ export class TunnelClient {
 		this.#proxy.pause();
 
 		this.#emitter.setMaxListeners(this.tunnelLease.maximumConnections);
+		setMaxListeners(this.tunnelLease.maximumConnections);
 
 		this.#upstream = await createUpstreamConnection(
 			this.tunnelLease, this.#emitter, this.#upstreamAbortController.signal

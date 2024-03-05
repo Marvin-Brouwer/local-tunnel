@@ -1,14 +1,16 @@
 {
-    "extends": "../../tsconfig.json",
-    "compilerOptions": {
-        "outDir": "./lib",
+	"extends": "../../tsconfig.json",
+	"compilerOptions": {
+		"outDir": "./lib",
 		"paths": {
-		"@local-tunnel/client": ["../client"],
+			"@local-tunnel/client": [
+				"../client"
+			],
 		}
-    },
-    "include": [
-        "./src/**/*.*",
-        "./plugins/*.*",
-        "./package.json"
-    ]
+	},
+	"include": [
+		"./src/**/*.*",
+		"./plugins/*.*",
+		"./package.json"
+	]
 }
