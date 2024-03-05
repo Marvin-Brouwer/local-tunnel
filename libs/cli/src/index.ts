@@ -6,57 +6,32 @@ import { mapHttpArgument, registerHttp } from './commands/http';
 import { mapHttpsArgument, registerHttps } from './commands/https';
 import packageConfig from '../package.json' assert { type: 'json' };
 
-const isNpmDlx = (commandArgs: string[]) => (
-	commandArgs.some((arg) => arg === 'npx')
+const isNpmDlx = (executionPath: string) => (
+	// X:\\...\\npm-cache\\_npx\\e3035ddd66a30df3\\node_modules\\@local-tunnel\\cli\\lib\\index.js
+	executionPath.includes('npm-cache') && executionPath.includes('_npx')
 );
-const isPnpmDlx = (commandArgs: string[]) => (
-	commandArgs.some((arg) => arg === 'pnpm') && commandArgs.some((arg) => arg === 'dlx')
+const isPnpmDlx = (executionPath: string) => (
+	// X:\\...\\.pnpm-store\\v3\\tmp\\dlx-10592\\node_modules\\@local-tunnel\\cli\\lib\\index.js
+	executionPath.includes('.pnpm') && executionPath.includes('tmp') && executionPath.includes('dlx-')
 );
-const isYarnDlx = (commandArgs: string[]) => (
-	commandArgs.some((arg) => arg === 'yarn') && commandArgs.some((arg) => arg === 'dlx')
+const isYarnDlx = (executionPath: string) => (
+	// X:\\...\\Yarn\\Berry\\cache\\@local-tunnel-cli-npm-3.0.0-alpha.4-f8c47b2075-8.zip
+	// \\node_modules\\@local-tunnel\\cli\\lib\\index.js
+	executionPath.includes('yarn') && executionPath.includes('.zip')
 );
-
-function testStack() {
-	// generate a stack trace
-	return (new Error()).stack;
-}
 
 /**
  * Since we support dlx, global install, and normal dependency install,
  * we reflect back the command used in the help sceen.
 */
 const getName = () => {
-	const commandArgs = process.argv.slice(0, 3);
 	// TODO: Remove once tested
+	const executionPath = new URL(import.meta.url).pathname.toLowerCase();
 	// eslint-disable-next-line
-	console.log('commandArgs', commandArgs)
-	try {
-		// eslint-disable-next-line
-		console.log('require.main', require.main)
-	} catch {
-		// do nothing
-	}
-	try {
-		// eslint-disable-next-line
-		console.log('module.parent', module.parent)
-	} catch {
-		// do nothing
-	}
-	try {
-		// eslint-disable-next-line
-		console.log('import.meta.url', import.meta.url)
-	} catch {
-		// do nothing
-	}
-	try {
-		// eslint-disable-next-line
-		console.log('testStack', testStack())
-	} catch {
-		// do nothing
-	}
-	if (isNpmDlx(commandArgs)) return `npx ${packageConfig.name}`;
-	if (isPnpmDlx(commandArgs)) return `pnpm dlx ${packageConfig.name}`;
-	if (isYarnDlx(commandArgs)) return `yarn dlx ${packageConfig.name}`;
+	console.log(executionPath);
+	if (isNpmDlx(executionPath)) return `npx ${packageConfig.name}`;
+	if (isPnpmDlx(executionPath)) return `pnpm dlx ${packageConfig.name}`;
+	if (isYarnDlx(executionPath)) return `yarn dlx ${packageConfig.name}`;
 
 	return 'lt';
 };

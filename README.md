@@ -77,27 +77,21 @@ Furthermore, you'll have to get a paid subscription on [`ngrok`](https://ngrok.c
 To create a tunnel locally run any of the following commands, depending on your package manager of choice.  
 
 ```console
->npx --package=@local-tunnel/cli@latest lt help
+npx @local-tunnel/cli@latest help
 ```
 
 ```console
-pnpm dlx @local-tunnel/cli help
+pnpm dlx @local-tunnel/cli@latest  help
 ```
 
 ```console
-yarn dlx @local-tunnel/cli help
+yarn dlx @local-tunnel/cli@latest  help
 ```
 
-If you'd like, `@localtunnel/cli` can also be installed globally, or as a package dependency, after which you can invoke the CLI by running:  
+If you'd like, `@localtunnel/cli` can also be installed as a package dependency, after which you can invoke the CLI by running:  
 
 ```console
-local-tunnel help
-```
-
-or:
-
-```console
-lt help
+pnpm run @local-tunnel/cli help
 ```
 
 The CLI help is pretty comprehensive so no online docs are included for the CLI tool.  
