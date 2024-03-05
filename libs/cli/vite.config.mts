@@ -4,7 +4,6 @@ import path from 'path';
 
 import { defineConfig } from 'vite';
 import eslintPlugin from 'vite-plugin-eslint';
-import textReplace from '@rollup/plugin-replace';
 
 import packageConfig from './package.json' assert { type: 'json' };
 import serveDummy from './plugins/dummy-server';

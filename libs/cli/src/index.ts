@@ -1,3 +1,5 @@
+/* eslint-disable import/no-import-module-exports */
+
 import { program } from 'commander';
 
 import { mapHttpArgument, registerHttp } from './commands/http';
@@ -14,6 +16,11 @@ const isYarnDlx = (commandArgs: string[]) => (
 	commandArgs.some((arg) => arg === 'yarn') && commandArgs.some((arg) => arg === 'dlx')
 );
 
+function testStack() {
+	// generate a stack trace
+	return (new Error()).stack;
+}
+
 /**
  * Since we support dlx, global install, and normal dependency install,
  * we reflect back the command used in the help sceen.
@@ -22,7 +29,31 @@ const getName = () => {
 	const commandArgs = process.argv.slice(0, 3);
 	// TODO: Remove once tested
 	// eslint-disable-next-line
-	console.log(commandArgs)
+	console.log('commandArgs', commandArgs)
+	try {
+		// eslint-disable-next-line
+		console.log('require.main', require.main)
+	} catch {
+		// do nothing
+	}
+	try {
+		// eslint-disable-next-line
+		console.log('module.parent', module.parent)
+	} catch {
+		// do nothing
+	}
+	try {
+		// eslint-disable-next-line
+		console.log('import.meta.url', import.meta.url)
+	} catch {
+		// do nothing
+	}
+	try {
+		// eslint-disable-next-line
+		console.log('testStack', testStack())
+	} catch {
+		// do nothing
+	}
 	if (isNpmDlx(commandArgs)) return `npx ${packageConfig.name}`;
 	if (isPnpmDlx(commandArgs)) return `pnpm dlx ${packageConfig.name}`;
 	if (isYarnDlx(commandArgs)) return `yarn dlx ${packageConfig.name}`;

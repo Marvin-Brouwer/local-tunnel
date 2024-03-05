@@ -77,7 +77,7 @@ Furthermore, you'll have to get a paid subscription on [`ngrok`](https://ngrok.c
 To create a tunnel locally run any of the following commands, depending on your package manager of choice.  
 
 ```console
-npx @local-tunnel/cli help
+>npx --package=@local-tunnel/cli@latest lt help
 ```
 
 ```console

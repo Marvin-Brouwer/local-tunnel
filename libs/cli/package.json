@@ -1,15 +1,10 @@
 {
 	"name": "@local-tunnel/cli",
-	"version": "3.0.0-alpha.3",
+	"version": "3.0.0-alpha.4",
 	"description": "Command line interface for @local-tunnel/client",
 	"type": "module",
-	"main": "./dist/index.js",
-	"bin": {
-		".": "./lib/index.js",
-		"lt": "./lib/index.js",
-		"localtunnel": "./lib/index.js",
-		"local-tunnel": "./lib/index.js"
-	},
+	"main": "./lib/index.js",
+	"bin": "./lib/index.js",
 	"scripts": {
 		"prepack": "pnpm build && chmod +x ./lib/index.js",
 		"lt:dev:8080": "pnpm lt http://localhost:8080 --remote-host localtunnel-dev --subdomain 8080 --print-requests",
