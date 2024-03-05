@@ -17,7 +17,7 @@
 [repo-lt-url]: https://github.com/localtunnel/localtunnel
 [repo-lt-shield]: https://img.shields.io/badge/Forked_from-localtunnel-lightgray?style=flat-square&logo=github
 
-[discord-url]: https://discord.gg/fkw3Tmyu
+[discord-url]: https://discord.com/channels/958295823001722890/1214549930396491838
 [discord-shield]: https://img.shields.io/discord/958295823001722890?label=discord&logo=discord&style=flat-square
 
 # `@local-tunnel/*`
