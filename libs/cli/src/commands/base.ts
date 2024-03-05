@@ -62,6 +62,7 @@ export const getBaseOptions = (command: Command) => {
 export async function openLocalTunnel(
 	printRequestInfo: boolean, openUrlOnConnect: boolean, config: TunnelConfig
 ) {
+	console.info(`requesting tunnel from ${format.link(`https://${config.server.hostName}/`)}`);
 	const tunnel = await createLocalTunnel(config)
 		.catch((err) => {
 			console.error(format.error(err));

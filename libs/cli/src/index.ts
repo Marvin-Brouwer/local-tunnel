@@ -1,5 +1,6 @@
 /* eslint-disable import/no-import-module-exports */
 
+import chalk from 'chalk';
 import { program } from 'commander';
 
 import { mapHttpArgument, registerHttp } from './commands/http';
@@ -25,9 +26,22 @@ const isYarnDlx = (executionPath: string) => (
 */
 const getName = () => {
 	const executionPath = new URL(import.meta.url).pathname.toLowerCase();
-	if (isNpmDlx(executionPath)) return `npx ${packageConfig.name}`;
-	if (isPnpmDlx(executionPath)) return `pnpm dlx ${packageConfig.name}`;
-	if (isYarnDlx(executionPath)) return `yarn dlx ${packageConfig.name}`;
+
+	if (isNpmDlx(executionPath)) {
+		// eslint-disable-next-line no-console
+		console.log();
+		return `npx ${packageConfig.name}`;
+	}
+	if (isPnpmDlx(executionPath)) {
+		// eslint-disable-next-line no-console
+		console.log();
+		return `pnpm dlx ${packageConfig.name}`;
+	}
+	if (isYarnDlx(executionPath)) {
+		// eslint-disable-next-line no-console
+		console.log();
+		return `yarn dlx ${packageConfig.name}`;
+	}
 
 	return 'lt';
 };
@@ -46,10 +60,14 @@ program
 Promise.resolve()
 	.then(() => registerHttp(program, commandName))
 	.then(() => registerHttps(program, commandName))
-/**
-     * This function exists to make the cli framework distinguish between http and https,
-     * Without having to compromise on typing urls
-     */
+	// eslint-disable-next-line no-console
+	.then(() => console.log(chalk.bold(packageConfig.name), chalk.italic(`@${packageConfig.version}`)))
+	// eslint-disable-next-line no-console
+	.then(() => console.log())
+	/**
+	 * This function exists to make the cli framework distinguish between http and https,
+	 * Without having to compromise on typing urls
+	 */
 	.then(() => program.parse(process.argv
 		.flatMap(mapHttpsArgument)
 		.flatMap(mapHttpArgument)));
