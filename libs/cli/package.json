@@ -1,28 +1,24 @@
 {
 	"name": "@local-tunnel/cli",
-	"version": "3.0.0-alpha.2",
+	"version": "3.0.0-alpha.3",
 	"description": "Command line interface for @local-tunnel/client",
-	"main": "./dist/index.mjs",
+	"type": "module",
+	"main": "./dist/index.js",
 	"bin": {
-		".": "./lib/index.mjs",
-		"lt": "./lib/index.mjs",
-		"localtunnel": "./lib/index.mjs",
-		"local-tunnel": "./lib/index.mjs"
-	},
-	"exports": {
-		".": {
-			"npx": "./dist/index.mjs"
-		}
+		".": "./lib/index.js",
+		"lt": "./lib/index.js",
+		"localtunnel": "./lib/index.js",
+		"local-tunnel": "./lib/index.js"
 	},
 	"scripts": {
-		"prepack": "pnpm build",
+		"prepack": "pnpm build && chmod +x ./lib/index.js",
 		"lt:dev:8080": "pnpm lt http://localhost:8080 --remote-host localtunnel-dev --subdomain 8080 --print-requests",
 		"lt:dev:8008": "pnpm lt http://localhost:8008 --remote-host localtunnel-dev --subdomain 8008 --print-requests",
 		"lt:dev:astro": "pnpm lt https://localhost:4321 -skip-cert-val --remote-host localtunnel-dev --subdomain astro --print-requests",
 		"lt:ext:8080": "pnpm lt http://localhost:8080 --subdomain 8080 --print-requests",
 		"lt:ext:8008": "pnpm lt http://localhost:8008 --subdomain 8008 --print-requests",
 		"lt:ext:astro": "pnpm lt https://localhost:4321 -skip-cert-val --subdomain astro --print-requests",
-		"lt": "node ./lib/index.mjs",
+		"lt": "node ./lib/index.js",
 		"build": "vite build",
 		"build:production": "vite optimize && vite build --mode production",
 		"lint": "pnpm eslint -c ../../.eslintrc.js ./src/** ./plugins/** ./vite.config.mts",

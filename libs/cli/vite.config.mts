@@ -4,6 +4,7 @@ import path from 'path';
 
 import { defineConfig } from 'vite';
 import eslintPlugin from 'vite-plugin-eslint';
+import textReplace from '@rollup/plugin-replace';
 
 import packageConfig from './package.json' assert { type: 'json' };
 import serveDummy from './plugins/dummy-server';
@@ -43,7 +44,7 @@ export default defineConfig((configEnv) => ({
 		keepNames: true
 	},
 	build: {
-		minify: !isDev,
+		minify: false,
 		target: ['ESNext',],
 		outDir: outputDir,
 		sourcemap: true,
@@ -58,10 +59,10 @@ export default defineConfig((configEnv) => ({
 			],
 			treeshake: true,
 			output: {
-				compact: !isDev,
+				compact: false,
 				indent: isDev,
 				inlineDynamicImports: true,
-				banner: '#!/usr/bin/env node \n\n',
+				banner: '#!/usr/bin/env node',
 				interop: 'compat',
 				hashCharacters: 'hex',
 				globals: (name) => name
