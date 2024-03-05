@@ -2,6 +2,7 @@ import net from 'node:net';
 import { type Duplex } from 'node:stream';
 
 import { type TunnelLease } from './tunnel-lease';
+import packageConfig from '../../package.json' assert { type: 'json' };
 import { type SocketError, isRejectedCode } from '../errors/socket-error';
 import { type TunnelEventEmitter } from '../errors/tunnel-events';
 import { UnknownUpstreamTunnelError, UpstreamTunnelRejectedError } from '../errors/upstream-tunnel-errors';
@@ -70,7 +71,14 @@ export const createUpstreamConnection = async (
 	const intervalHandle = setInterval(() => {
 		if (abortSignal.aborted || connection.closed || connection.errored) return;
 
-		fetch(`${tunnelLease.tunnelUrl}?keepalive`, { method: 'options', signal: abortSignal }).catch(() => {
+		fetch(`${tunnelLease.tunnelUrl}?keepalive`, {
+			method: 'options',
+			signal: abortSignal,
+			headers: {
+				'Bypass-Tunnel-Reminder': tunnelLease.id,
+				'User-Agent': encodeURIComponent(`${packageConfig.name}@${packageConfig.version}`)
+			}
+		}).catch(() => {
 			// don't care about any error.
 		});
 	}, 2000);
