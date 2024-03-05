@@ -49,6 +49,7 @@ const createConnection = (
 		if (logger.enabled) logger.log('connection to %s UP', format.remoteAddress(tunnelLease));
 
 		remoteSocket.on('error', (error: SocketError) => {
+			if (abortSignal.aborted) return;
 			if (logger.enabled) logger.log('socket error %j', error);
 			const upstreamError = mapError(error);
 			emitter.emit('upstream-error', upstreamError);
@@ -67,7 +68,9 @@ export const createUpstreamConnection = async (
 
 	// This seems to be necessary to prevent the tunnel from closing, event though keepalive is set to true
 	const intervalHandle = setInterval(() => {
-		fetch(`${tunnelLease.tunnelUrl}?keepalive`, { method: 'options' }).catch(() => {
+		if (abortSignal.aborted || connection.closed || connection.errored) return;
+
+		fetch(`${tunnelLease.tunnelUrl}?keepalive`, { method: 'options', signal: abortSignal }).catch(() => {
 			// don't care about any error.
 		});
 	}, 2000);

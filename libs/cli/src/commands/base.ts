@@ -82,11 +82,13 @@ export async function openLocalTunnel(
 	}
 
 	tunnel.on('upstream-error', (err) => {
+		if (tunnel.status === 'closed' || tunnel.status === 'closing') return;
 		console.error(format.error(err));
 		console.error();
 		close(-2);
 	});
 	tunnel.on('proxy-error', (err) => {
+		if (tunnel.status === 'closed' || tunnel.status === 'closing') return;
 		console.error(format.error(err));
 		console.error();
 		close(-3);
@@ -130,11 +132,14 @@ export async function openLocalTunnel(
 	async function close(code = 0) {
 		if (code !== -1) {
 			console.warn('Closing tunnel...');
-			console.warn();
 		}
 		if (tunnel.status !== 'closed' && tunnel.status !== 'closing') { await tunnel.close(); }
 
-		process.exit(code);
+		if (Number.isNaN(code)) {
+			process.exitCode = +code;
+		}
+
+		process.exit();
 	}
 }
 

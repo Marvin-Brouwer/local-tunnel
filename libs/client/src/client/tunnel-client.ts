@@ -15,9 +15,9 @@ export class TunnelClient {
 
 	#upstream?: Duplex;
 
-	#fallback?: Duplex;
+	#proxy?: Duplex;
 
-	#abortController: AbortController;
+	#upstreamAbortController: AbortController;
 
 	#status: 'open' | 'closed' | 'connecting' | 'closing' = 'closed';
 
@@ -53,7 +53,7 @@ export class TunnelClient {
 			captureRejections: true
 		}) as EventEmitter & TunnelEventEmitter;
 
-		this.#abortController = new AbortController();
+		this.#upstreamAbortController = new AbortController();
 	}
 
 	public async open(): Promise<this> {
@@ -68,17 +68,17 @@ export class TunnelClient {
 			return this;
 		}
 
-		this.#abortController = new AbortController();
+		this.#upstreamAbortController = new AbortController();
 		this.#status = 'connecting';
-		this.#fallback = await createProxyConnection(
-			this.tunnelConfig, this.tunnelLease, this.#emitter, this.#abortController.signal
+		this.#proxy = await createProxyConnection(
+			this.tunnelConfig, this.tunnelLease, this.#emitter, this.#upstreamAbortController.signal
 		);
-		this.#fallback.pause();
+		this.#proxy.pause();
 
 		this.#emitter.setMaxListeners(this.tunnelLease.maximumConnections);
 
 		this.#upstream = await createUpstreamConnection(
-			this.tunnelLease, this.#emitter, this.#abortController.signal
+			this.tunnelLease, this.#emitter, this.#upstreamAbortController.signal
 		);
 		this.#upstream
 			.transformHeaderHost(this.tunnelConfig)
@@ -89,13 +89,13 @@ export class TunnelClient {
 					'pipe-request', method, path
 				);
 			})
-			.pipe(this.#fallback)
+			.pipe(this.#proxy)
 			.pipe(this.#upstream)
 			.on('close', () => {
 				if (this.#status !== 'closed' && !this.#upstream?.destroyed) { this.#emitter.emit('tunnel-close'); }
 			});
 
-		this.#fallback
+		this.#proxy
 			.resume();
 
 		this.#status = 'open';
@@ -112,17 +112,17 @@ export class TunnelClient {
 		}
 
 		this.#status = 'closing';
-		this.#abortController.abort('closing connection');
 
 		await Promise.all([
 			// eslint-disable-next-line no-promise-executor-return
-			new Promise<void>((r) => this.#fallback?.end(r) ?? r()),
+			new Promise<void>((r) => this.#proxy?.end(r) ?? r()),
 			// eslint-disable-next-line no-promise-executor-return
 			new Promise<void>((r) => this.#upstream?.end(r) ?? r()),
 		]);
+		this.#upstreamAbortController.abort('closing connection');
 		if (!this.#upstream?.destroyed) { this.#emitter.emit('tunnel-closed'); }
 
-		this.#fallback?.destroy();
+		this.#proxy?.destroy();
 		this.#upstream?.destroy();
 
 		this.#status = 'closed';
