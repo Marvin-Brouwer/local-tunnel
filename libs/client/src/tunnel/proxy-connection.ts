@@ -70,7 +70,14 @@ const createHost = (
 			? new URLSearchParams()
 			: new URLSearchParams(urlParts[1]);
 
-		if (request.method === 'OPTION' && keepalive) {
+		if (request.method === 'OPTIONS' && keepalive) {
+			// eslint-disable-next-line
+			console.log('keepalive');
+			response.statusCode = 200;
+			response.statusMessage = 'keepalive';
+			response.writeHead(200, {
+				'Content-Type': 'text/plain'
+			});
 			return response.end();
 		}
 

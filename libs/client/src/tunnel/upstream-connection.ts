@@ -72,8 +72,10 @@ export const createUpstreamConnection = async (
 		if (abortSignal.aborted || connection.closed || connection.errored) return;
 
 		fetch(`${tunnelLease.tunnelUrl}?keepalive`, {
-			method: 'option',
+			method: 'OPTIONS',
 			signal: abortSignal,
+			keepalive: false,
+			mode: 'cors',
 			headers: {
 				'Bypass-Tunnel-Reminder': tunnelLease.id,
 				'User-Agent': encodeURIComponent(`${packageConfig.name}@${packageConfig.version}`)
