@@ -9,7 +9,9 @@ import { createLogger, format } from '../logger';
 
 const logger = createLogger('localtunnel:upstream:connection');
 
-const createConnection = (tunnelLease: TunnelLease, emitter: TunnelEventEmitter, abortSignal: AbortSignal) => new Promise<Duplex>((resolve) => {
+const createConnection = (
+	tunnelLease: TunnelLease, emitter: TunnelEventEmitter, abortSignal: AbortSignal
+) => new Promise<Duplex>((resolve) => {
 	if (logger.enabled) {
 		logger.log('establishing remote connection to %s', format.remoteAddress(tunnelLease));
 	}
@@ -20,7 +22,7 @@ const createConnection = (tunnelLease: TunnelLease, emitter: TunnelEventEmitter,
 			port: tunnelLease.remote.port,
 			allowHalfOpen: true,
 			keepAlive: true,
-			signal: abortSignal,
+			signal: abortSignal
 		});
 
 	const mapError = (error: SocketError) => {
@@ -56,8 +58,12 @@ const createConnection = (tunnelLease: TunnelLease, emitter: TunnelEventEmitter,
 	});
 });
 
-export const createUpstreamConnection = async (tunnelLease: TunnelLease, emitter: TunnelEventEmitter, abortSignal: AbortSignal) => {
-	const connection = await createConnection(tunnelLease, emitter, abortSignal);
+export const createUpstreamConnection = async (
+	tunnelLease: TunnelLease, emitter: TunnelEventEmitter, abortSignal: AbortSignal
+) => {
+	const connection = await createConnection(
+		tunnelLease, emitter, abortSignal
+	);
 
 	// This seems to be necessary to prevent the tunnel from closing, event though keepalive is set to true
 	const intervalHandle = setInterval(() => {

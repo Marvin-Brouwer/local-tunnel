@@ -24,27 +24,27 @@ export default defineConfig((configEnv) => ({
 				fix: isDev,
 				errorOnUnmatchedPattern: !isDev,
 				globInputPaths: true,
-				overrideConfigFile: path.resolve(__dirname, '../../.eslintrc.js'),
+				overrideConfigFile: path.resolve(__dirname, '../../.eslintrc.js')
 			}),
-			enforce: 'post',
+			enforce: 'post'
 		},
 		serveDummy({
 			configEnv: {
 				...configEnv,
 				command: isDev ? 'serve' : 'build',
-				mode: isDev ? 'development' : 'production',
+				mode: isDev ? 'development' : 'production'
 			},
-			port: 8080,
+			port: 8080
 		}),
 	],
 	// We need the exceptions to not mangle their names
 	esbuild: {
 		minifyIdentifiers: false,
-		keepNames: true,
+		keepNames: true
 	},
 	build: {
 		minify: !isDev,
-		target: ['ESNext'],
+		target: ['ESNext',],
 		outDir: outputDir,
 		sourcemap: true,
 		// Making ssr removes the need for almost all the polyfills
@@ -64,14 +64,14 @@ export default defineConfig((configEnv) => ({
 				banner: '#!/usr/bin/env node \n\n',
 				interop: 'compat',
 				hashCharacters: 'hex',
-				globals: (name) => name,
-			},
+				globals: (name) => name
+			}
 		},
 		lib: {
-			formats: ['es'],
+			formats: ['es',],
 			entry,
 			name: packageName,
-			fileName: () => 'lt.js',
-		},
-	},
+			fileName: () => 'lt.js'
+		}
+	}
 }));

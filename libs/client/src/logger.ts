@@ -10,7 +10,7 @@ import { type TunnelLease } from './tunnel/tunnel-lease';
 type LoggerFactory = (namespace: string) => Pick<Debugger, 'enabled' |'log'>;
 const fallbackLoggerFactory = (): LoggerFactory => () => ({
 	enabled: false,
-	log: () => { },
+	log: () => { }
 });
 
 export const createLogger = (namespace: string) => {
@@ -25,7 +25,7 @@ export const createLogger = (namespace: string) => {
 	const logger = debug(namespace);
 	return {
 		log: logger,
-		enabled: logger.enabled,
+		enabled: logger.enabled
 	};
 };
 
@@ -52,5 +52,5 @@ export const format = {
 		}
 		if (addressInfo.address === '127.0.0.1') return `//localhost:${addressInfo.port}`;
 		return `//${addressInfo.address}:${addressInfo.port}`;
-	},
+	}
 };

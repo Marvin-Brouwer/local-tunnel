@@ -1,6 +1,6 @@
 {
   "name": "@local-tunnel/client",
-  "version": "3.0.0-alpha.1",
+  "version": "3.0.0-alpha.2",
   "description": "",
   "files": [
     "dist",
@@ -20,6 +20,7 @@
   "typings": "./dist/types/index.d.ts",
   "types": "./dist/types/index.d.ts",
   "scripts": {
+	"prepack": "pnpm build",
     "watch": "pnpm build --mode development --watch",
     "build": "vite build",
     "build:production": "vite optimize && vite build --mode production",

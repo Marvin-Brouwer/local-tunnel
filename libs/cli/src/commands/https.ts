@@ -2,7 +2,7 @@ import chalk from 'chalk';
 import { type Command } from 'commander';
 
 import {
-	applyDefaultOptions, applyEaseOfUseOptions, applyHttpsOptions, applyOptions, getBaseOptions, openLocalTunnel,
+	applyDefaultOptions, applyEaseOfUseOptions, applyHttpsOptions, applyOptions, getBaseOptions, openLocalTunnel
 } from './base';
 import { type validateCertificatePaths } from '../validators/pathValidator';
 import { validateUrl } from '../validators/urlValidator';
@@ -10,7 +10,7 @@ import { validateUrl } from '../validators/urlValidator';
 const applyHttpsCommand = applyOptions(
 	applyDefaultOptions,
 	applyHttpsOptions,
-	applyEaseOfUseOptions,
+	applyEaseOfUseOptions
 );
 
 const getHttpsOptions = (command: Command) => {
@@ -19,29 +19,31 @@ const getHttpsOptions = (command: Command) => {
 
 	return {
 		localCert,
-		skipCertificateValidation,
+		skipCertificateValidation
 	};
 };
 
 async function callHttpsCommand(_:unknown, command: Command) {
 	const {
-		localHost, remoteHost, subdomain, printRequestInfo, openUrlOnConnect,
+		localHost, remoteHost, subdomain, printRequestInfo, openUrlOnConnect
 	} = getBaseOptions(command);
 	const { localCert, skipCertificateValidation } = getHttpsOptions(command);
 
 	const https = {
 		skipCertificateValidation,
-		cert: localCert,
+		cert: localCert
 	};
 
-	await openLocalTunnel(printRequestInfo, openUrlOnConnect, {
-		localHost,
-		server: {
-			hostName: remoteHost,
-			subdomain,
-		},
-		https,
-	});
+	await openLocalTunnel(
+		printRequestInfo, openUrlOnConnect, {
+			localHost,
+			server: {
+				hostName: remoteHost,
+				subdomain
+			},
+			https
+		}
+	);
 }
 
 /**
@@ -49,9 +51,9 @@ async function callHttpsCommand(_:unknown, command: Command) {
  * Without having to compromise on typing urls
  */
 export function mapHttpsArgument(arg: string) {
-	if (arg === 'https' || arg === 'https://' || arg === 'https://<origin>') { return ['https://<origin>']; }
+	if (arg === 'https' || arg === 'https://' || arg === 'https://<origin>') { return ['https://<origin>',]; }
 
-	if (arg.startsWith('https://') && arg.length !== 8) { return ['https://<origin>', '--origin', arg]; }
+	if (arg.startsWith('https://') && arg.length !== 8) { return ['https://<origin>', '--origin', arg,]; }
 
 	return arg;
 }
@@ -68,12 +70,10 @@ export async function registerHttps(program: Command) {
                 + 'Arguments:\n'
                 + '  https://<origin>                                Local origin url, including port when applicable. \n'
                 + '                                                  E.g. "https://localhost:4321"';
-			},
+			}
 			/* eslint-enable max-len */
 		})
-		.description(
-			`Open a local-tunnel to a https endpoint ${chalk.italic('(lt help https)')}`,
-		)
+		.description(`Open a local-tunnel to a https endpoint ${chalk.italic('(lt help https)')}`)
 		.addOption(program
 			.createOption('--origin <origin>')
 			.makeOptionMandatory()

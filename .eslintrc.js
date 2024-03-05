@@ -11,7 +11,7 @@ module.exports = {
 	],
     ignorePatterns: ['node_modules', '*.html'],
 	plugins: [
-		// 'jest', 
+		// 'jest',
 		'@typescript-eslint',
 		'import'
 	],
@@ -97,6 +97,22 @@ module.exports = {
 					caseInsensitive: true,
 				},
 			},
+		],
+		'function-paren-newline': [
+			'error',
+			{
+				minItems: 3,
+			}
+		],
+		'comma-dangle': [
+			'error',
+			{
+				"arrays": "always",
+				"objects": "never",
+				"imports": "never",
+				"exports": "never",
+				"functions": "never"
+			}
 		],
 	}
 }

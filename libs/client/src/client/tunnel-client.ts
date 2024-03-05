@@ -41,16 +41,16 @@ export class TunnelClient {
 		return this.tunnelLease.client.publicIp;
 	}
 
+	// eslint-disable-next-line function-paren-newline
 	constructor(
 		// Can't get the linter to work with constructor args
 		// eslint-disable-next-line no-unused-vars
-        readonly tunnelConfig: TunnelConfig,
-        // Can't get the linter to work with constructor args
-        // eslint-disable-next-line no-unused-vars
-        readonly tunnelLease: TunnelLease,
-	) {
+		readonly tunnelConfig: TunnelConfig,
+		// Can't get the linter to work with constructor args
+		// eslint-disable-next-line no-unused-vars
+		readonly tunnelLease: TunnelLease) {
 		this.#emitter = new EventEmitter({
-			captureRejections: true,
+			captureRejections: true
 		}) as EventEmitter & TunnelEventEmitter;
 
 		this.#abortController = new AbortController();
@@ -70,18 +70,24 @@ export class TunnelClient {
 
 		this.#abortController = new AbortController();
 		this.#status = 'connecting';
-		this.#fallback = await createProxyConnection(this.tunnelConfig, this.tunnelLease, this.#emitter, this.#abortController.signal);
+		this.#fallback = await createProxyConnection(
+			this.tunnelConfig, this.tunnelLease, this.#emitter, this.#abortController.signal
+		);
 		this.#fallback.pause();
 
 		this.#emitter.setMaxListeners(this.tunnelLease.maximumConnections);
 
-		this.#upstream = await createUpstreamConnection(this.tunnelLease, this.#emitter, this.#abortController.signal);
+		this.#upstream = await createUpstreamConnection(
+			this.tunnelLease, this.#emitter, this.#abortController.signal
+		);
 		this.#upstream
 			.transformHeaderHost(this.tunnelConfig)
 			.on('data', (chunk: Buffer) => {
 				const httpLeader = chunk.toString().split(/(\r\n|\r|\n)/)[0];
-				const [method, path] = httpLeader.split(' ');
-				this.#emitter.emit('pipe-request', method, path);
+				const [method, path,] = httpLeader.split(' ');
+				this.#emitter.emit(
+					'pipe-request', method, path
+				);
 			})
 			.pipe(this.#fallback)
 			.pipe(this.#upstream)
@@ -134,8 +140,6 @@ export const createLocalTunnel = async (config: ClientConfig): Promise<TunnelCli
 	const tunnelConfig = applyConfig(config);
 	const tunnelLease = await getTunnelLease(tunnelConfig);
 
-	return new TunnelClient(
-		tunnelConfig,
-		tunnelLease,
-	);
+	return new TunnelClient(tunnelConfig,
+		tunnelLease);
 };

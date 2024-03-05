@@ -4,7 +4,7 @@
 
 import { readFileSync } from 'node:fs';
 import {
-	type RequestListener, type Server, type ServerResponse, createServer,
+	type RequestListener, type Server, type ServerResponse, createServer
 } from 'node:http';
 import path, { posix } from 'node:path';
 
@@ -37,7 +37,7 @@ function serveDummy(options: RollupServeOptions): Plugin {
 	// A very crude way of disabling the fake server on build
 	if (options.configEnv?.command !== 'serve') {
 		return {
-			name: 'rollup-plugin-serve-dummy',
+			name: 'rollup-plugin-serve-dummy'
 		};
 	}
 
@@ -53,7 +53,9 @@ function serveDummy(options: RollupServeOptions): Plugin {
 			? new URLSearchParams()
 			: new URLSearchParams(urlParts[1]);
 
-		console.log('request', urlPath, urlQuery.toString());
+		console.log(
+			'request', urlPath, urlQuery.toString()
+		);
 
 		if (urlPath === '/ECONNREFUSED') {
 			const fakeError = new Error('Faking connection refused') as ErrorWithCode;
@@ -84,7 +86,9 @@ function serveDummy(options: RollupServeOptions): Plugin {
 			.replaceAll('${canonical}', canonical)
 			.replaceAll('${statusCode}', statusCode.toString());
 
-		return found(response, statusCode, 'text/html', content);
+		return found(
+			response, statusCode, 'text/html', content
+		);
 	};
 
 	// release previous server instance if rollup is reloading configuration in watch mode
@@ -114,17 +118,19 @@ function serveDummy(options: RollupServeOptions): Plugin {
 	});
 
 	return {
-		name: 'rollup-plugin-serve-dummy',
+		name: 'rollup-plugin-serve-dummy'
 	};
 }
 
-function found(response: ServerResponse, statusCode: number, mimeType: string, content: string) {
+function found(
+	response: ServerResponse, statusCode: number, mimeType: string, content: string
+) {
 	response.writeHead(statusCode, { 'Content-Type': mimeType || 'text/plain' });
 	response.end(content, 'utf-8');
 }
 
 function closeServerOnTermination() {
-	const terminationSignals = ['SIGINT', 'SIGTERM', 'SIGQUIT', 'SIGHUP'];
+	const terminationSignals = ['SIGINT', 'SIGTERM', 'SIGQUIT', 'SIGHUP',];
 	terminationSignals.forEach((signal) => {
 		process.on(signal, () => {
 			if (server) {

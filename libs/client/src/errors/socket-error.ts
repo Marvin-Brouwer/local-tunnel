@@ -4,7 +4,7 @@
 export type SocketError = DestroyedSocketError | UnknownSocketError
 export const isSocketError = (error: Error): error is SocketError => error.constructor.name === 'SocketError';
 
-export const isRejectedCode = (error: SocketError): boolean => ['ECONNRESET', 'ECONNREFUSED'].includes(error.code);
+export const isRejectedCode = (error: SocketError): boolean => ['ECONNRESET', 'ECONNREFUSED',].includes(error.code);
 
 export type DestroyedSocketError = Error & {
 	code: string

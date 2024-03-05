@@ -1,10 +1,11 @@
 {
 	"name": "@local-tunnel/cli",
-	"version": "3.0.0-alpha.1",
+	"version": "3.0.0-alpha.2",
 	"description": "Command line interface for @local-tunnel/client",
 	"main": "./dist/index.mjs",
 	"bin": {
-		"lf": "./lib/index.mjs",
+		".": "./lib/index.mjs",
+		"lt": "./lib/index.mjs",
 		"localtunnel": "./lib/index.mjs",
 		"local-tunnel": "./lib/index.mjs"
 	},
@@ -14,6 +15,7 @@
 		}
 	},
 	"scripts": {
+		"prepack": "pnpm build",
 		"lt:dev:8080": "pnpm lt http://localhost:8080 --remote-host localtunnel-dev --subdomain 8080 --print-requests",
 		"lt:dev:8008": "pnpm lt http://localhost:8008 --remote-host localtunnel-dev --subdomain 8008 --print-requests",
 		"lt:dev:astro": "pnpm lt https://localhost:4321 -skip-cert-val --remote-host localtunnel-dev --subdomain astro --print-requests",

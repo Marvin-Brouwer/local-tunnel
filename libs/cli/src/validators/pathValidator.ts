@@ -9,9 +9,11 @@ function validatePath(name: string, value: string) {
 		? value
 		: path.resolve(process.cwd(), value);
 
-	access(absolutePath, constants.R_OK, () => {
-		throw new InvalidArgumentError(`File for  ${name} "${absolutePath}" was not found.`);
-	});
+	access(
+		absolutePath, constants.R_OK, () => {
+			throw new InvalidArgumentError(`File for  ${name} "${absolutePath}" was not found.`);
+		}
+	);
 
 	const fileStats = statSync(absolutePath);
 	if (!fileStats.isFile()) {
@@ -27,7 +29,7 @@ export function validateCertificatePaths(value: string): CertificateConfig {
 	if (values.length === 1) { throw new InvalidArgumentError('Missing \'key-path\' in arguments.'); }
 	if (values.length > 3) { throw new InvalidArgumentError('Too many arguments.'); }
 
-	const [pemPath, keyPath] = values;
+	const [pemPath, keyPath,] = values;
 	const absolutePemPath = validatePath('pem-path', pemPath.trim());
 	const absoluteKeyPath = validatePath('key-path', keyPath.trim());
 	const absoluteCaPath: string = values.length !== 3 ? undefined : validatePath('ca-path', values[2].trim());
@@ -35,6 +37,6 @@ export function validateCertificatePaths(value: string): CertificateConfig {
 	return {
 		pemLocation: absolutePemPath,
 		keyLocation: absoluteKeyPath,
-		certificateAuthorityLocation: absoluteCaPath,
+		certificateAuthorityLocation: absoluteCaPath
 	};
 }

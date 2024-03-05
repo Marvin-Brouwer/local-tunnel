@@ -96,7 +96,8 @@ export class LeaseFetchResponseError extends LocalTunnelError {
  * Error indicating the `upstream` tunnel or host had an unexpected error.
  *
  * **Note:** We like to keep the unexpected errors to a minimum.
- * If you encounter any, please report a bug at {@link https://github.com/Marvin-Brouwer/local-tunnel/issues/new?assignees=&labels=bug&template=unexpected-error.md&title=}
+ * If you encounter any, please report a bug at {@link
+ * https://github.com/Marvin-Brouwer/local-tunnel/issues/new?assignees=&labels=bug&template=unexpected-error.md&title=}
  */
 export class UnknownUpstreamTunnelError extends LocalTunnelError {
 	public static isUnknownUpstreamTunnelError(error: Error): error is UnknownUpstreamTunnelError {

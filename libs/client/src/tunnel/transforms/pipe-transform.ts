@@ -16,14 +16,16 @@ declare module 'node:stream' {
 	}
 }
 
-Object.defineProperty(Duplex.prototype, 'pipeTransform', {
-	value(transform: TransformFunction): Duplex {
-		const duplex = this as Duplex;
-		return duplex.pipe(new Transform({
-			transform,
-		}));
-	},
-	writable: false,
-	enumerable: false,
-	configurable: true,
-});
+Object.defineProperty(
+	Duplex.prototype, 'pipeTransform', {
+		value(transform: TransformFunction): Duplex {
+			const duplex = this as Duplex;
+			return duplex.pipe(new Transform({
+				transform
+			}));
+		},
+		writable: false,
+		enumerable: false,
+		configurable: true
+	}
+);

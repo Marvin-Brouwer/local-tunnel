@@ -13,7 +13,9 @@ declare module 'node:stream' {
 }
 
 const newLineMatch = /(?:\r\n|\r|\n)/g;
-const transformHeaderHost = (config: TunnelConfig): TransformFunction => (chunk, _encoding, callback) => {
+const transformHeaderHost = (config: TunnelConfig): TransformFunction => (
+	chunk, _encoding, callback
+) => {
 	const data = chunk
 		.toString()
 		.split(newLineMatch)
@@ -27,12 +29,14 @@ const transformHeaderHost = (config: TunnelConfig): TransformFunction => (chunk,
 	callback(null, Buffer.from(data.join('\r\n')));
 };
 
-Object.defineProperty(Duplex.prototype, 'transformHeaderHost', {
-	value(config: TunnelConfig): Duplex {
-		const duplex = this as Duplex;
-		return duplex.pipeTransform(transformHeaderHost(config));
-	},
-	writable: false,
-	enumerable: false,
-	configurable: true,
-});
+Object.defineProperty(
+	Duplex.prototype, 'transformHeaderHost', {
+		value(config: TunnelConfig): Duplex {
+			const duplex = this as Duplex;
+			return duplex.pipeTransform(transformHeaderHost(config));
+		},
+		writable: false,
+		enumerable: false,
+		configurable: true
+	}
+);

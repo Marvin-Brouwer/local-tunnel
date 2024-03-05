@@ -4,6 +4,16 @@ import { mapHttpArgument, registerHttp } from './commands/http';
 import { mapHttpsArgument, registerHttps } from './commands/https';
 import packageConfig from '../package.json' assert { type: 'json' };
 
+const isNpmDlx = (commandArgs: string[]) => (
+	commandArgs.some((arg) => arg === 'npx')
+);
+const isPnpmDlx = (commandArgs: string[]) => (
+	commandArgs.some((arg) => arg === 'pnpm') && commandArgs.some((arg) => arg === 'dlx')
+);
+const isYarnDlx = (commandArgs: string[]) => (
+	commandArgs.some((arg) => arg === 'yarn') && commandArgs.some((arg) => arg === 'dlx')
+);
+
 /**
  * Since we support dlx, global install, and normal dependency install,
  * we reflect back the command used in the help sceen.
@@ -13,9 +23,9 @@ const getName = () => {
 	// TODO: Remove once tested
 	// eslint-disable-next-line
 	console.log(commandArgs)
-	if (commandArgs.some((arg) => arg === 'npx')) return `npx ${packageConfig.name}`;
-	if (commandArgs.some((arg) => arg === 'pnpm') && commandArgs.some((arg) => arg === 'dlx')) return `pnpm dlx ${packageConfig.name}`;
-	if (commandArgs.some((arg) => arg === 'yarn') && commandArgs.some((arg) => arg === 'dlx')) return `yarn dlx ${packageConfig.name}`;
+	if (isNpmDlx(commandArgs)) return `npx ${packageConfig.name}`;
+	if (isPnpmDlx(commandArgs)) return `pnpm dlx ${packageConfig.name}`;
+	if (isYarnDlx(commandArgs)) return `yarn dlx ${packageConfig.name}`;
 
 	return 'lt';
 };

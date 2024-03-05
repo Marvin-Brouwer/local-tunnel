@@ -18,24 +18,30 @@ export function applyOptions(...applications: ((commandApplication: Command) => 
 }
 
 export const applyDefaultOptions = (command: Command) => command
-	.option('-h, --remote-host <string>', 'Upstream server\'s hostname, server providing forwarding', 'localtunnel.me')
+	.option(
+		'-h, --remote-host <string>', 'Upstream server\'s hostname, server providing forwarding', 'localtunnel.me'
+	)
 	.option('-s, --subdomain <string>', 'Request a subdomain, if left out or unavailable will return a random domain');
 
 export const applyHttpsOptions = (command: Command) => command
 	.option<CertificateConfig>(
 		'--local-cert "<pem-path> <key-path> [ca-path]"',
 		'Path to certificate files for local HTTPS server',
-		validateCertificatePaths,
+		validateCertificatePaths
 	)
 	.option(
 		'--allow-invalid-cert, --skip-cert-val',
 		'Disable certificate checks for your local HTTPS server (ignore cert/key/ca options)',
-		false,
+		false
 	);
 
 export const applyEaseOfUseOptions = (command: Command) => command
-	.option('--print-requests', 'Print basic request info', false)
-	.option('-o, --open-url', 'Opens the tunnel URL in your browser, on connection', false);
+	.option(
+		'--print-requests', 'Print basic request info', false
+	)
+	.option(
+		'-o, --open-url', 'Opens the tunnel URL in your browser, on connection', false
+	);
 
 export const getBaseOptions = (command: Command) => {
 	const localHost = command.optsWithGlobals().origin as URL;
@@ -49,11 +55,13 @@ export const getBaseOptions = (command: Command) => {
 		remoteHost,
 		subdomain,
 		printRequestInfo,
-		openUrlOnConnect,
+		openUrlOnConnect
 	};
 };
 
-export async function openLocalTunnel(printRequestInfo: boolean, openUrlOnConnect: boolean, config: TunnelConfig) {
+export async function openLocalTunnel(
+	printRequestInfo: boolean, openUrlOnConnect: boolean, config: TunnelConfig
+) {
 	const tunnel = await createLocalTunnel(config)
 		.catch((err) => {
 			console.error(format.error(err));
@@ -66,7 +74,9 @@ export async function openLocalTunnel(printRequestInfo: boolean, openUrlOnConnec
 			if (method === 'OPTIONS' && path === '/?keepalive') return;
 
 			const utcDate = new Date(Date.now());
-			console.info(format.timestamp(utcDate), method, path);
+			console.info(
+				format.timestamp(utcDate), method, path
+			);
 		});
 	}
 

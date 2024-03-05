@@ -27,24 +27,24 @@ export default defineConfig({
 				fix: isDev,
 				errorOnUnmatchedPattern: !isDev,
 				globInputPaths: true,
-				overrideConfigFile: path.resolve(__dirname, '../../.eslintrc.js'),
+				overrideConfigFile: path.resolve(__dirname, '../../.eslintrc.js')
 			}),
-			enforce: 'post',
+			enforce: 'post'
 		},
 		dts({
 			entryRoot: srcFolder,
-			outDir: path.join(outputDir, 'types'),
+			outDir: path.join(outputDir, 'types')
 		}),
 	],
 	// We need the exceptions to not mangle their names
 	esbuild: {
 		minifyIdentifiers: false,
-		keepNames: true,
+		keepNames: true
 	},
 	build: {
 		// https://github.com/vitejs/vite/issues/13926#issuecomment-1708536097
 		minify: !isDev,
-		target: ['ESNext'],
+		target: ['ESNext',],
 		outDir: outputDir,
 		sourcemap: true,
 		// This is to prevent issues with workspace files reading `*.d.ts` files.
@@ -52,7 +52,7 @@ export default defineConfig({
 		rollupOptions: {
 			external: [
 				/^node:/,
-				...(isDev ? ['debug'] : []),
+				...(isDev ? ['debug',] : []),
 				'zod',
 			],
 			treeshake: !isDev,
@@ -62,14 +62,14 @@ export default defineConfig({
 				compact: !isDev,
 				indent: isDev,
 				inlineDynamicImports: true,
-				globals: (name) => name,
-			},
+				globals: (name) => name
+			}
 		},
 		lib: {
-			formats: ['cjs', 'es', 'umd'],
+			formats: ['cjs', 'es', 'umd',],
 			entry,
 			name: packageName,
-			fileName: 'index',
-		},
-	},
+			fileName: 'index'
+		}
+	}
 });

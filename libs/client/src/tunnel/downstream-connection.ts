@@ -17,7 +17,7 @@ const createConnection = (tunnelConfig: TunnelConfig) => new Promise<Duplex>((re
 		host: tunnelConfig.localHost.host,
 		port: tunnelConfig.localHost.port === ''
 			? undefined!
-			: +tunnelConfig.localHost.port,
+			: +tunnelConfig.localHost.port
 	};
 
 	const { https } = tunnelConfig;
@@ -29,7 +29,7 @@ const createConnection = (tunnelConfig: TunnelConfig) => new Promise<Duplex>((re
 				...localSocketAddress,
 				allowHalfOpen: true,
 				keepAlive: true,
-				noDelay: true,
+				noDelay: true
 			});
 		}
 
@@ -37,15 +37,15 @@ const createConnection = (tunnelConfig: TunnelConfig) => new Promise<Duplex>((re
 			cert: fs.readFileSync(https.cert.pemLocation),
 			key: fs.readFileSync(https.cert.keyLocation),
 			ca: https.cert.certificateAuthorityLocation
-				? [fs.readFileSync(https.cert.certificateAuthorityLocation)]
-				: undefined,
+				? [fs.readFileSync(https.cert.certificateAuthorityLocation),]
+				: undefined
 		};
 
 		return tls
 			.connect({
 				...localSocketAddress,
 				rejectUnauthorized: !https.skipCertificateValidation,
-				...cert,
+				...cert
 			})
 			.setNoDelay(true)
 			.setKeepAlive(true);

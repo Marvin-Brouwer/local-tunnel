@@ -42,25 +42,27 @@ const getLeaseUrl = (config: TunnelConfig): string => {
 };
 
 // eslint-disable-next-line max-len
-const createTunnelLease = (config: TunnelConfig, leaseResponse: TunnelLeaseResponse, clientIp: string | undefined): TunnelLease => ({
+const createTunnelLease = (
+	config: TunnelConfig, leaseResponse: TunnelLeaseResponse, clientIp: string | undefined
+): TunnelLease => ({
 	id: leaseResponse.id,
 
 	tunnelUrl: new URL(leaseResponse.url),
 	cachedTunnelUrl: leaseResponse.cached_url ? new URL(leaseResponse.cached_url) : undefined,
 
 	client: {
-		publicIp: clientIp,
+		publicIp: clientIp
 	},
 
 	remote: {
 		ip: leaseResponse.ip,
 		// Prefer the ip if returned from the server
 		target: leaseResponse.ip ?? config.server.hostName,
-		port: leaseResponse.port,
+		port: leaseResponse.port
 	},
 
 	httpsEnabled: !!config.https,
-	maximumConnections: leaseResponse.max_conn_count || 1,
+	maximumConnections: leaseResponse.max_conn_count || 1
 });
 
 export const getTunnelLease = async (config: TunnelConfig): Promise<TunnelLease> => {
@@ -80,5 +82,7 @@ export const getTunnelLease = async (config: TunnelConfig): Promise<TunnelLease>
 			return undefined;
 		});
 
-	return createTunnelLease(config, leaseResponse, clientIp);
+	return createTunnelLease(
+		config, leaseResponse, clientIp
+	);
 };
