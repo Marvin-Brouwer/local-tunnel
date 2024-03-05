@@ -1,8 +1,17 @@
-# @local-tunnel/cli
+# `@local-tunnel/cli`
 
 TODO: Write better readme.
 
 ## Usage
+
+TODO
+
+### Known public hosts
+
+- [localtunnel.me](https://localtunnel.me) (`/` redirects to the github page)  
+- [loca.lt](https://loca.lt) (`/` redirects to the github page)  
+
+## Development
 
 Running `pnpm watch` will start a dummy server on port `8080` reflecting the path requested.  
 If you now run `pnpm lt:dev:8080` in this folder too, you will run lt, setup to point to a `localtunnel-server` running on your machine.  

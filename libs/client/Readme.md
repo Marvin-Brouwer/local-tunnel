@@ -1,4 +1,4 @@
-# @local-tunnel/client
+# `@local-tunnel/client`
 
 TODO: Write better readme.
 
