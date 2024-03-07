@@ -76,7 +76,9 @@ const createHost = (
 			response.statusCode = 200;
 			response.statusMessage = 'keepalive';
 			response.writeHead(200, {
-				'Content-Type': 'text/plain'
+				'Content-Type': 'text/plain',
+				Allow: 'OPTIONS',
+				'Access-Control-Allow-Methods': 'OPTIONS'
 			});
 			return response.end();
 		}

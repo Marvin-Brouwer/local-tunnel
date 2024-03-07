@@ -5,6 +5,7 @@ import { program } from 'commander';
 
 import { mapHttpArgument, registerHttp } from './commands/http';
 import { mapHttpsArgument, registerHttps } from './commands/https';
+import * as format from './format';
 import packageConfig from '../package.json' assert { type: 'json' };
 
 const isNpmDlx = (executionPath: string) => (
@@ -55,6 +56,16 @@ program
 	.allowUnknownOption(false)
 	.helpCommand(true)
 	.helpOption(false);
+
+process.on('uncaughtException', (err) => {
+	// eslint-disable-next-line no-console
+	console.error(format.error(err));
+});
+
+process.on('unhandledRejection', (reason, _promise) => {
+	// eslint-disable-next-line no-console
+	console.error(chalk.bgRed(reason));
+});
 
 // No top level async allowed for commonJs
 Promise.resolve()

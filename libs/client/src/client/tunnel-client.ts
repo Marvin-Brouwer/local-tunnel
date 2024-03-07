@@ -76,8 +76,9 @@ export class TunnelClient {
 		);
 		this.#proxy.pause();
 
-		this.#emitter.setMaxListeners(this.tunnelLease.maximumConnections);
-		setMaxListeners(this.tunnelLease.maximumConnections);
+		// We can set these to 0, since the upstream connection doesn't allow any more connections than configured
+		this.#emitter.setMaxListeners(0);
+		setMaxListeners(0, this.#upstreamAbortController.signal);
 
 		this.#upstream = await createUpstreamConnection(
 			this.tunnelLease, this.#emitter, this.#upstreamAbortController.signal

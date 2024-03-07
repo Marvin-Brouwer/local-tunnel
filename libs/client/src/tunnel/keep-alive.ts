@@ -21,7 +21,7 @@ export const keepAlive = async (tunnelLease: TunnelLease, abortSignal: AbortSign
 		})
 			.catch((e) => {
 				// don't care about any error.
-				if (logger.enabled) logger.log('Keepalive error %j', e);
+				if (logger.enabled) logger.log('KeepAlive error %j', e);
 			});
 	}, 2000);
 
