@@ -72,7 +72,7 @@ const createHost = (
 
 		if (request.method === 'OPTIONS' && keepalive) {
 			// eslint-disable-next-line
-			console.log('keepalive');
+			console.log('keepalive called');
 			response.statusCode = 200;
 			response.statusMessage = 'keepalive';
 			response.writeHead(200, {

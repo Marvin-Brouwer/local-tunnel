@@ -6,6 +6,7 @@ import { type Duplex } from 'node:stream';
 import { type ClientConfig, type TunnelConfig, applyConfig } from './client-config';
 import { type TunnelEventEmitter, type TunnelEventListener } from '../errors/tunnel-events';
 import { format } from '../logger';
+import { keepAlive } from '../tunnel/keep-alive';
 import { createProxyConnection } from '../tunnel/proxy-connection';
 import { type TunnelLease, getTunnelLease } from '../tunnel/tunnel-lease';
 import { createUpstreamConnection } from '../tunnel/upstream-connection';
@@ -98,6 +99,8 @@ export class TunnelClient {
 
 		this.#proxy
 			.resume();
+
+		keepAlive(this.tunnelLease, this.#upstreamAbortController.signal);
 
 		this.#status = 'open';
 		this.#emitter.emit('tunnel-open');
