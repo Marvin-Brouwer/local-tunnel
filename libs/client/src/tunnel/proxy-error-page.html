@@ -1,66 +1,66 @@
 <html>
-    <head>
-        <title>Tunnel to '${address}'</title>
-        <meta http-equiv="Refresh" content="10" />
-        <style>
-            code, pre {
-                display: inline-block;
-                background: #efefef;
-                border-radius: 0.5em 0.5em 0.5em 0.5em;
-                padding: 0.1em 0.2em;
-                user-select: text;
-            }
+	<head>
+		<title>Tunnel to '${address}'</title>
+		<meta http-equiv="Refresh" content="10" />
+		<style>
+			code, pre {
+				display: inline-block;
+				background: #efefef;
+				border-radius: 0.5em 0.5em 0.5em 0.5em;
+				padding: 0.1em 0.2em;
+				user-select: text;
+			}
 
-            pre#errorDetails {
-                margin: 1ex;
-                padding: .5ex;
-                border: 1px solid silver;
-                display: flex;
-                position: relative;
-            }
-            pre#errorDetails > code {
-                display: flex;
-                width: 100%;
-                overflow: auto;
-            }
-        </style>
-        <script>
-            const addressElement = () => document
-                .getElementById('address');
+			pre#errorDetails {
+				margin: 1ex;
+				padding: .5ex;
+				border: 1px solid silver;
+				display: flex;
+				position: relative;
+			}
+			pre#errorDetails > code {
+				display: flex;
+				width: 100%;
+				overflow: auto;
+			}
+		</style>
+		<script>
+			const addressElement = () => document
+				.getElementById('address');
 
-            function selectText(node) {
-            
-                if (document.body.createTextRange) {
-                    const range = document.body.createTextRange();
-                    range.moveToElementText(node);
-                    range.select();
-                } else if (window.getSelection) {
-                    const selection = window.getSelection();
-                    const range = document.createRange();
-                    range.selectNodeContents(node);
-                    selection.removeAllRanges();
-                    selection.addRange(range);
-                } else {
-                    console.warn("Could not select text in node: Unsupported browser.");
-                }
-            }
+			function selectText(node) {
 
-            function load() {
-                addressElement().addEventListener('dblclick', () => selectText(addressElement()));
-            }
-        </script>
-    </head>
-    <body onload="load()">
-        <h1>Connection error</h1>
-        <p>
-            Failed to connect to <code id="address">${address}</code>.<br/>
-            Please make sure the host is available, or check your firewall settings. 
-        </p>
-        <p>
-            ErrorCode: <code id="errorCode">${errorCode}</code>.
-        </p>
-        <p>
-            <pre id="errorDetails"><code>${errorDetails}</code></pre>
-        </p>
-    </body>
+				if (document.body.createTextRange) {
+					const range = document.body.createTextRange();
+					range.moveToElementText(node);
+					range.select();
+				} else if (window.getSelection) {
+					const selection = window.getSelection();
+					const range = document.createRange();
+					range.selectNodeContents(node);
+					selection.removeAllRanges();
+					selection.addRange(range);
+				} else {
+					console.warn("Could not select text in node: Unsupported browser.");
+				}
+			}
+
+			function load() {
+				addressElement().addEventListener('dblclick', () => selectText(addressElement()));
+			}
+		</script>
+	</head>
+	<body onload="load()">
+		<h1>Connection error</h1>
+		<p>
+			Failed to connect to <code id="address">${address}</code>.<br/>
+			Please make sure the host is available, or check your firewall settings.
+		</p>
+		<p>
+			ErrorCode: <code id="errorCode">${errorCode}</code>.
+		</p>
+		<p>
+			<pre id="errorDetails"><code>${errorDetails}</code></pre>
+		</p>
+	</body>
 </html>

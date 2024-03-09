@@ -1,5 +1,8 @@
 module.exports = {
 	parser: '@typescript-eslint/parser',
+	globals: {
+		"NodeJS": true
+	},
 	extends: [
 		'eslint:recommended',
 		'plugin:@typescript-eslint/eslint-recommended',

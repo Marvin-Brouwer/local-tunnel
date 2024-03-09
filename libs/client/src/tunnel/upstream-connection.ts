@@ -7,11 +7,11 @@ import { type TunnelEventEmitter } from '../errors/tunnel-events';
 import { UnknownUpstreamTunnelError, UpstreamTunnelRejectedError } from '../errors/upstream-tunnel-errors';
 import { createLogger, format } from '../logger';
 
-const logger = createLogger('localtunnel:upstream:connection');
-
 export const createUpstreamConnection = (
-	tunnelLease: TunnelLease, emitter: TunnelEventEmitter, abortSignal: AbortSignal
+	id: number, tunnelLease: TunnelLease, emitter: TunnelEventEmitter | undefined, abortSignal: AbortSignal
 ) => new Promise<Duplex>((resolve) => {
+	const logger = createLogger(`localtunnel:upstream:connection[${id}]`);
+
 	if (logger.enabled) {
 		logger.log('establishing remote connection to %s', format.remoteAddress(tunnelLease));
 	}
@@ -35,7 +35,7 @@ export const createUpstreamConnection = (
 
 	const initialConnectionError = (error: SocketError) => {
 		const upstreamError = mapError(error);
-		emitter.emit('upstream-error', upstreamError);
+		emitter?.emit('upstream-error', upstreamError);
 		remoteSocket.destroy();
 
 		// We don't need to reject here, errors are handled by the implementer.
@@ -52,7 +52,7 @@ export const createUpstreamConnection = (
 			if (abortSignal.aborted) return;
 			if (logger.enabled) logger.log('socket error %j', error);
 			const upstreamError = mapError(error);
-			emitter.emit('upstream-error', upstreamError);
+			emitter?.emit('upstream-error', upstreamError);
 		});
 
 		resolve(remoteSocket);

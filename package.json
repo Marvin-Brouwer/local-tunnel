@@ -36,5 +36,8 @@
   },
   "dependencies": {
     "@types/node": "^20.11.22"
+  },
+  "volta": {
+    "node": "21.0.0"
   }
 }

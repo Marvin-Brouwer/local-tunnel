@@ -5,7 +5,9 @@ import { createLogger } from '../logger';
 const logger = createLogger('localtunnel:keep-alive');
 
 export const keepAlive = async (tunnelLease: TunnelLease, abortSignal: AbortSignal) => {
-	// This seems to be necessary to prevent the tunnel from closing, event though keepalive is set to true
+	// This seemed to be necessary to prevent the tunnel from closing, event though keepalive is set to true
+	// We have kept this, so later we can use this to actually detect a frozen tunnel from a connection
+	// if we ever take over the server package.
 	const intervalHandle = setInterval(() => {
 		if (abortSignal.aborted) return;
 

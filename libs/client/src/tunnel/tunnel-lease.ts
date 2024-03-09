@@ -1,4 +1,5 @@
 import { type TunnelConfig } from '../client/client-config';
+import { createWarning } from '../errors/tunnel-events';
 import { LeaseFetchRejectedError, LeaseFetchResponseError } from '../errors/upstream-tunnel-errors';
 
 const randomDomain = Symbol.for('?new');
@@ -65,7 +66,7 @@ const createTunnelLease = (
 	maximumConnections: leaseResponse.max_conn_count || 1
 });
 
-export const getTunnelLease = async (config: TunnelConfig): Promise<TunnelLease> => {
+export const getTunnelLease = async (config: TunnelConfig, onWarning: NodeJS.WarningListener): Promise<TunnelLease> => {
 	const url = getLeaseUrl(config);
 	const leaseFetchResponse = await fetch(url)
 		.catch((err) => { throw new LeaseFetchRejectedError(config, err); });
@@ -77,8 +78,11 @@ export const getTunnelLease = async (config: TunnelConfig): Promise<TunnelLease>
 	const clientIp = await fetch('https://api.ipify.org')
 		.then((response) => response.text())
 		.catch((err) => {
-			// eslint-disable-next-line no-console
-			console.warn('Unable to determine tunnel password', err);
+			onWarning(createWarning(
+				'PasswordCheckRejected',
+				'Unable to determine tunnel password',
+				(err as Error).cause?.toString() ?? (err as Error).message
+			));
 			return undefined;
 		});
 

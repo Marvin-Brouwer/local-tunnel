@@ -62,11 +62,6 @@ process.on('uncaughtException', (err) => {
 	console.error(format.error(err));
 });
 
-process.on('unhandledRejection', (reason, _promise) => {
-	// eslint-disable-next-line no-console
-	console.error(chalk.bgRed(reason));
-});
-
 // No top level async allowed for commonJs
 Promise.resolve()
 	.then(() => registerHttp(program, commandName))

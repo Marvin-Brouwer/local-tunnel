@@ -15,6 +15,7 @@ export type TunnelEventListener<T> =
     & ProxyErrorHandler<T>
     & DownstreamErrorHandler<T>
     & TunnelRequestHandler<T>
+    & TunnelWarningHandler<T>
 
 /**
  * Event emitter options for the `@local-tunnel/client`
@@ -28,6 +29,7 @@ export type TunnelEventEmitter = {
         & ProxyErrorEmitter<TunnelEventEmitter>
         & DownstreamErrorEmitter<TunnelEventEmitter>
         & TunnelRequestEmitter<TunnelEventEmitter>
+        & TunnelWarningEmitter<TunnelEventEmitter>
 }
 
 type UpstreamErrorEmitter<T> = (eventName: 'upstream-error', error: UpstreamTunnelError) => T
@@ -46,3 +48,15 @@ type TunnelCloseHandler<T> = (eventName: 'tunnel-close', listener: () => void) =
 
 type TunnelRequestEmitter<T> = (eventName: 'pipe-request', method: string, path: string) => T
 type TunnelRequestHandler<T> = (eventName: 'pipe-request', listener: (method: string, path: string) => void) => T
+
+type TunnelWarningEmitter<T> = (eventName: 'warning', error: Error) => T;
+type TunnelWarningHandler<T> = (eventName: 'warning', listener: NodeJS.WarningListener) => T;
+
+export const createWarning = (
+	name: string, message: string, cause?: string
+) => {
+	const warning = new Error(message, { cause });
+	warning.name = `${name}Warning`;
+
+	return warning;
+};

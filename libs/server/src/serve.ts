@@ -1,6 +1,7 @@
-import createServer from 'localtunnel-server/server';
+// @ts-ignore
+import createServer from 'localtunnel-server/server'; // eslint-disable-line 7016
 import { type AddressInfo } from 'net';
-import debug from 'localtunnel-server/node_modules/debug';
+import debug from 'debug';
 import { type Debug } from 'debug';
 
 (debug as Debug).enable([

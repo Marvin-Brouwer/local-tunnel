@@ -96,6 +96,9 @@ export async function openLocalTunnel(
 	tunnel.on('downstream-error', (err) => {
 		console.error(format.error(err));
 	});
+	tunnel.on('warning', (warn) => {
+		console.warn(format.warning(warn));
+	});
 
 	console.info(`tunneling ${format.link(tunnel.localAddress)} <> ${format.link(tunnel.url)}`);
 	if (tunnel.password) console.info(`password: ${format.password(tunnel.password)}`);
@@ -130,7 +133,7 @@ export async function openLocalTunnel(
 	tunnel.on('tunnel-close', close);
 
 	async function close(code = 0) {
-		if (code !== -1) {
+		if (tunnel.status !== 'closed' && tunnel.status !== 'closing' && code !== -1) {
 			console.warn('Closing tunnel...');
 		}
 		if (tunnel.status !== 'closed' && tunnel.status !== 'closing') { await tunnel.close(); }

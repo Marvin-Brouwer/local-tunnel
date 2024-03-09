@@ -1,26 +1,30 @@
 import '../tunnel/transforms/header-host-transform';
 
 import { EventEmitter, setMaxListeners } from 'node:events';
-import { type Duplex } from 'node:stream';
+import { type Server } from 'node:http';
+import { type AddressInfo } from 'node:net';
 
 import { type ClientConfig, type TunnelConfig, applyConfig } from './client-config';
-import { type TunnelEventEmitter, type TunnelEventListener } from '../errors/tunnel-events';
+import { type TunnelEventEmitter, type TunnelEventListener, createWarning } from '../errors/tunnel-events';
 import { format } from '../logger';
+import { awaitCallback, wait } from '../promise-helper';
 import { keepAlive } from '../tunnel/keep-alive';
-import { createProxyConnection } from '../tunnel/proxy-connection';
+import { createProxyErrorServer } from '../tunnel/proxy-error-server';
+import { Tunnel } from '../tunnel/tunnel';
 import { type TunnelLease, getTunnelLease } from '../tunnel/tunnel-lease';
-import { createUpstreamConnection } from '../tunnel/upstream-connection';
 
 export class TunnelClient {
 	#emitter: EventEmitter & TunnelEventEmitter;
 
-	#upstream?: Duplex;
-
-	#proxy?: Duplex;
+	#proxyErrorServer?: Server;
 
 	#upstreamAbortController: AbortController;
 
+	#tunnels: Array<Tunnel>;
+
 	#status: 'open' | 'closed' | 'connecting' | 'closing' = 'closed';
+
+	#bufferedWarnings: Array<Error>;
 
 	public get status() {
 		return this.#status;
@@ -49,57 +53,75 @@ export class TunnelClient {
 		readonly tunnelConfig: TunnelConfig,
 		// Can't get the linter to work with constructor args
 		// eslint-disable-next-line no-unused-vars
-		readonly tunnelLease: TunnelLease) {
+		readonly tunnelLease: TunnelLease,
+		// Can't get the linter to work with constructor args
+		// eslint-disable-next-line no-unused-vars
+		bufferedWarnings: Array<Error>
+		// ---
+	) {
 		this.#emitter = new EventEmitter({
 			captureRejections: true
 		}) as EventEmitter & TunnelEventEmitter;
 
+		// We can set these to 0, since the upstream connection doesn't allow any more connections than configured
+		this.#emitter.setMaxListeners(0);
+
+		this.#bufferedWarnings = bufferedWarnings;
+
 		this.#upstreamAbortController = new AbortController();
+		this.#tunnels = new Array<Tunnel>(tunnelLease.maximumConnections - this.#calculateTunnelMargin());
+	}
+
+	#calculateTunnelMargin() {
+		if (this.tunnelLease.maximumConnections >= 7) return Math.ceil(this.tunnelLease.maximumConnections / 4);
+
+		this.#bufferedWarnings.push(createWarning(
+			'LowConnection',
+			`Low connection count detected: ${this.tunnelLease.maximumConnections}\n`
+			+ 'This may cause unintentional connection issues.',
+			'tunnelLease.maximumConnections < 7'
+		));
+		if (this.tunnelLease.maximumConnections >= 5) return 2;
+
+		this.#bufferedWarnings.push(createWarning(
+			'LowConnection',
+			`Very low connection count detected: ${this.tunnelLease.maximumConnections}\n`
+			+ 'This may cause unintentional connection issues.',
+			'tunnelLease.maximumConnections < 5'
+		));
+
+		return 0;
 	}
 
 	public async open(): Promise<this> {
 		if (this.status === 'connecting') {
-			// eslint-disable-next-line no-console
-			console.warn('Tunnel was already connecting, noop.');
+			this.#emitter.emit('warning',
+				createWarning('DuplicateCall', 'TunnelClient was already connecting, noop.'));
 			return this;
 		}
 		if (this.status === 'open') {
-			// eslint-disable-next-line no-console
-			console.warn('Tunnel was already open, noop.');
+			this.#emitter.emit('warning',
+				createWarning('DuplicateCall', 'TunnelClient was already open, noop.'));
 			return this;
 		}
 
-		this.#upstreamAbortController = new AbortController();
-		this.#status = 'connecting';
-		this.#proxy = await createProxyConnection(
-			this.tunnelConfig, this.tunnelLease, this.#emitter, this.#upstreamAbortController.signal
-		);
-		this.#proxy.pause();
+		// eslint-disable-next-line no-restricted-syntax
+		for (const warning of this.#bufferedWarnings) {
+			this.#emitter.emit('warning', warning);
+		}
+		this.#bufferedWarnings = [];
 
+		this.#upstreamAbortController = new AbortController();
 		// We can set these to 0, since the upstream connection doesn't allow any more connections than configured
-		this.#emitter.setMaxListeners(0);
 		setMaxListeners(0, this.#upstreamAbortController.signal);
 
-		this.#upstream = await createUpstreamConnection(
-			this.tunnelLease, this.#emitter, this.#upstreamAbortController.signal
-		);
-		this.#upstream
-			.transformHeaderHost(this.tunnelConfig)
-			.on('data', (chunk: Buffer) => {
-				const httpLeader = chunk.toString().split(/(\r\n|\r|\n)/)[0];
-				const [method, path,] = httpLeader.split(' ');
-				this.#emitter.emit(
-					'pipe-request', method, path
-				);
-			})
-			.pipe(this.#proxy)
-			.pipe(this.#upstream)
-			.on('close', () => {
-				if (this.#status !== 'closed' && !this.#upstream?.destroyed) { this.#emitter.emit('tunnel-close'); }
-			});
+		this.#status = 'connecting';
 
-		this.#proxy
-			.resume();
+		this.#proxyErrorServer = await createProxyErrorServer(
+			this.tunnelConfig, this.tunnelLease, this.#emitter, this.#upstreamAbortController.signal
+		);
+
+		await this.#createTunnels();
 
 		keepAlive(this.tunnelLease, this.#upstreamAbortController.signal);
 
@@ -109,27 +131,63 @@ export class TunnelClient {
 		return this;
 	}
 
+	async #createTunnels() {
+		const errorServerAddress = (this.#proxyErrorServer!.address() as AddressInfo);
+
+		for (let i = 0; i < this.#tunnels.length; i += 1) {
+			const reconnectTunnel = async () => {
+				if (this.#upstreamAbortController.signal.aborted) return;
+				if (this.#status === 'closed' || this.#status === 'closing') return;
+
+				const currentTunnel = this.#tunnels[i];
+
+				this.#tunnels[i] = await currentTunnel.connect();
+
+				await wait(100);
+				await currentTunnel.close();
+			};
+
+			this.#tunnels[i] = new Tunnel(
+				i,
+				this.tunnelConfig,
+				this.tunnelLease,
+				this.#emitter,
+				errorServerAddress,
+				this.#upstreamAbortController.signal,
+				reconnectTunnel
+			);
+		}
+
+		await Promise
+			.all(this.#tunnels.map(async (tunnel, i) => {
+				// Stagger the initial connection, both for logging and to not fry the remote
+				await wait(200 * i);
+				await tunnel.connect();
+			}));
+	}
+
 	public async close(): Promise<this> {
 		if (this.status === 'closed' || this.status === 'closing') {
-			// eslint-disable-next-line no-console
-			console.warn('Tunnel was already closed, noop.');
+			this.#emitter.emit('warning',
+				createWarning('DuplicateCall', 'TunnelClient was already closed, noop.'));
 			return this;
 		}
 
 		this.#status = 'closing';
 
 		await Promise.all([
-			// eslint-disable-next-line no-promise-executor-return
-			new Promise<void>((r) => this.#proxy?.end(r) ?? r()),
-			// eslint-disable-next-line no-promise-executor-return
-			new Promise<void>((r) => this.#upstream?.end(r) ?? r()),
+			...this.#tunnels.map((tunnel) => tunnel.close),
 		]);
+		this.#proxyErrorServer?.closeIdleConnections();
+		this.#proxyErrorServer?.closeAllConnections();
+		await awaitCallback(this.#proxyErrorServer?.close).catch((err: Error) => {
+			// Swallow "Cannot read properties of undefined (reading 'closeIdleConnections')".
+			// There's some bug inside of the client, but we can kill it now anyway.
+			if (err.name !== 'TypeError' || !err.message.includes('closeIdleConnections')) throw err;
+		});
+
 		this.#upstreamAbortController.abort('closing connection');
-		if (!this.#upstream?.destroyed) { this.#emitter.emit('tunnel-closed'); }
-
-		this.#proxy?.destroy();
-		this.#upstream?.destroy();
-
+		this.#emitter.emit('tunnel-closed');
 		this.#status = 'closed';
 
 		return this;
@@ -142,9 +200,12 @@ export class TunnelClient {
 }
 
 export const createLocalTunnel = async (config: ClientConfig): Promise<TunnelClient> => {
-	const tunnelConfig = applyConfig(config);
-	const tunnelLease = await getTunnelLease(tunnelConfig);
+	const bufferedWarnings: Array<Error> = [];
 
-	return new TunnelClient(tunnelConfig,
-		tunnelLease);
+	const tunnelConfig = applyConfig(config);
+	const tunnelLease = await getTunnelLease(tunnelConfig, (warning) => bufferedWarnings.push(warning));
+
+	return new TunnelClient(
+		tunnelConfig, tunnelLease, bufferedWarnings
+	);
 };
