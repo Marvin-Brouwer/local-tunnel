@@ -3,6 +3,7 @@
 /* eslint-disable no-use-before-define */
 
 import cp from 'node:child_process';
+import readline from 'node:readline';
 
 import { type CertificateConfig, type TunnelConfig, createLocalTunnel } from '@local-tunnel/client';
 import { type Command } from 'commander';
@@ -62,6 +63,15 @@ export const getBaseOptions = (command: Command) => {
 export async function openLocalTunnel(
 	printRequestInfo: boolean, openUrlOnConnect: boolean, config: TunnelConfig
 ) {
+	// Disable key input
+	process.stdin.pause();
+
+	if (process.stdin.setRawMode != null) {
+		process.stdin.setRawMode(true);
+	}
+	process.stdin.setEncoding('utf8');
+	readline.emitKeypressEvents(process.stdin);
+
 	console.info(`requesting tunnel from ${format.link(`https://${config.server.hostName}/`)}`);
 	const tunnel = await createLocalTunnel(config)
 		.catch((err) => {
@@ -104,10 +114,10 @@ export async function openLocalTunnel(
 	if (tunnel.password) console.info(`password: ${format.password(tunnel.password)}`);
 
 	/**
-     * `cachedUrl` is set when using a proxy server that support resource caching.
-     * This URL generally remains available after the tunnel itself has closed.
-     * @see https://github.com/localtunnel/localtunnel/pull/319#discussion_r319846289
-     */
+	 * `cachedUrl` is set when using a proxy server that support resource caching.
+	 * This URL generally remains available after the tunnel itself has closed.
+	 * @see https://github.com/localtunnel/localtunnel/pull/319#discussion_r319846289
+	 */
 	if (tunnel.cachedUrl) {
 		console.info('cachedUrl:', format.link(tunnel.cachedUrl));
 	}
@@ -121,6 +131,12 @@ export async function openLocalTunnel(
 		console.info();
 	}
 
+	process.stdin.on('keypress', async (_, key) => {
+		if (!key?.ctrl || key?.name !== 'c') return;
+		await close();
+	});
+	process.stdin.resume();
+
 	console.info('SIGTERM or close the cli to close the socket.');
 	console.info();
 	process.on('SIGABRT', close);
@@ -129,6 +145,7 @@ export async function openLocalTunnel(
 	process.on('SIGINT', close);
 	process.on('SIGQUIT', close);
 	process.on('SIGTERM', close);
+	process.on('SIGTSTP', close);
 
 	tunnel.on('tunnel-close', close);
 

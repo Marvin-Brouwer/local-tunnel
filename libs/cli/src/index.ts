@@ -8,6 +8,9 @@ import { mapHttpsArgument, registerHttps } from './commands/https';
 import * as format from './format';
 import packageConfig from '../package.json' assert { type: 'json' };
 
+// Disable key input
+process.stdin.pause();
+
 const isNpmDlx = (executionPath: string) => (
 	// X:\\...\\npm-cache\\_npx\\e3035ddd66a30df3\\node_modules\\@local-tunnel\\cli\\lib\\index.js
 	executionPath.includes('npm-cache') && executionPath.includes('_npx')
