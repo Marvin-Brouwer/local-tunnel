@@ -25,7 +25,7 @@ const getHttpsOptions = (command: Command) => {
 
 async function callHttpsCommand(_:unknown, command: Command) {
 	const {
-		localHost, remoteHost, subdomain, printRequestInfo, openUrlOnConnect
+		localHost, remoteHost, hostForward, subdomain, printRequestInfo, openUrlOnConnect
 	} = getBaseOptions(command);
 	const { localCert, skipCertificateValidation } = getHttpsOptions(command);
 
@@ -39,6 +39,7 @@ async function callHttpsCommand(_:unknown, command: Command) {
 			localHost,
 			server: {
 				hostName: remoteHost,
+				hostForward,
 				subdomain
 			},
 			https

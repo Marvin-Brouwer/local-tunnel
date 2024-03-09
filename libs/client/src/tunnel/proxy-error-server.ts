@@ -76,6 +76,10 @@ export const createProxyErrorServer = (
 			return response.end();
 		}
 
+		// TODO Remove once server issues fixed
+		// eslint-disable-next-line
+		console.log('REQUEST', urlParts);
+
 		try {
 			const body = await getRequestBody(request);
 			await fetch(`${format.localAddress(tunnelConfig)}${urlPath}?${urlQuery}`, {

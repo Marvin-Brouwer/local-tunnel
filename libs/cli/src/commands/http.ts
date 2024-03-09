@@ -11,7 +11,7 @@ const applyHttpCommand = applyOptions(applyDefaultOptions,
 
 async function callHttpCommand(_:unknown, command: Command) {
 	const {
-		localHost, remoteHost, subdomain, printRequestInfo, openUrlOnConnect
+		localHost, remoteHost, hostForward, subdomain, printRequestInfo, openUrlOnConnect
 	} = getBaseOptions(command);
 
 	await openLocalTunnel(
@@ -19,6 +19,7 @@ async function callHttpCommand(_:unknown, command: Command) {
 			localHost,
 			server: {
 				hostName: remoteHost,
+				hostForward,
 				subdomain
 			}
 		}

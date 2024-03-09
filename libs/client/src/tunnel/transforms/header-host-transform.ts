@@ -16,6 +16,8 @@ const newLineMatch = /(?:\r\n|\r|\n)/g;
 const transformHeaderHost = (config: TunnelConfig): TransformFunction => (
 	chunk, _encoding, callback
 ) => {
+	if (config.server.hostForward === 'keep-upstream') return callback(null, chunk);
+
 	const data = chunk
 		.toString()
 		.split(newLineMatch)
@@ -26,7 +28,7 @@ const transformHeaderHost = (config: TunnelConfig): TransformFunction => (
 			return `Host: ${config.localHost.host}:${config.localHost.port}`;
 		});
 
-	callback(null, Buffer.from(data.join('\r\n')));
+	return callback(null, Buffer.from(data.join('\r\n')));
 };
 
 Object.defineProperty(

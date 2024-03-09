@@ -22,7 +22,11 @@ export const applyDefaultOptions = (command: Command) => command
 	.option(
 		'-h, --remote-host <string>', 'Upstream server\'s hostname, server providing forwarding', 'localtunnel.me'
 	)
-	.option('-s, --subdomain <string>', 'Request a subdomain, if left out or unavailable will return a random domain');
+	.option('-s, --subdomain <string>', 'Request a subdomain, if left out or unavailable will return a random domain')
+	.addOption(command
+		.createOption('--host-forward <value>', 'Transform the "Host" header value to the local server')
+		.choices(['to-local', 'keep-upstream',])
+		.default('keep-upstream'));
 
 export const applyHttpsOptions = (command: Command) => command
 	.option<CertificateConfig>(
@@ -47,6 +51,7 @@ export const applyEaseOfUseOptions = (command: Command) => command
 export const getBaseOptions = (command: Command) => {
 	const localHost = command.optsWithGlobals().origin as URL;
 	const remoteHost = command.optsWithGlobals().remoteHost as string;
+	const hostForward = command.optsWithGlobals().hostForward as 'to-local' | 'keep-upstream';
 	const subdomain = command.optsWithGlobals().subdomain as string | undefined;
 	const printRequestInfo = command.optsWithGlobals().printRequests as boolean;
 	const openUrlOnConnect = command.optsWithGlobals().openUrl as boolean;
@@ -54,6 +59,7 @@ export const getBaseOptions = (command: Command) => {
 	return {
 		localHost,
 		remoteHost,
+		hostForward,
 		subdomain,
 		printRequestInfo,
 		openUrlOnConnect

@@ -20,7 +20,11 @@ export interface HttpsConfig extends zod.infer<typeof httpsConfig> {}
 const serverConfig = zod
 	.object({
 		hostName: optional(zod.string().trim()),
-		subdomain: optional(zod.string().trim())
+		subdomain: optional(zod.string().trim()),
+		hostForward: zod
+			.union([zod.literal('to-local'), zod.literal('keep-upstream'),])
+			.default('keep-upstream')
+			.optional()
 	});
 export interface ServerHostConfig extends zod.infer<typeof serverConfig> {}
 
@@ -33,7 +37,9 @@ const originUrlSchema = object({
 		// Only allow single value
 		.refine((v) => (v === '/' ? zod.OK : zod.INVALID)),
 	search: zod.literal('', literalError('Value contains a query, this is not supported.')),
-	hash: zod.literal('', literalError('Value contains a hash, this is not supported.'))
+	hash: zod.literal('', literalError('Value contains a hash, this is not supported.')),
+	username: zod.literal('', literalError('Value contains a username, this is not supported.')),
+	password: zod.literal('', literalError('Value contains a password, this is not supported.'))
 });
 
 const urlSchema = zod
